@@ -3,7 +3,7 @@ name: Actualizacion Automatica del Mapa Sismico
 on:
   schedule:
     # Se ejecuta de forma automática cada 6 horas (en horario UTC)
-    - cron: '0 */6 * * *'
+    - cron: '0 */2 * * *'
   workflow_dispatch: # Esto te permite activar el servidor manualmente desde la web si deseas probarlo
 
 permissions:
