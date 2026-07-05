@@ -48,7 +48,7 @@ Los datos que alimentan esta visualización provienen de [Terremoto Venezuela](h
 
 * **Proveedor principal de datos**: [FUNVISIS](http://www.funvisis.gob.ve/) (Fundación Venezolana de Investigaciones Sismológicas).
 * **Plataforma del dashboard**: Alojado por Esri Venezuela a través de su **Programa de Respuesta a Desastres (DRP)**.
-* **Enlace al dashboard original**: [Monitoreo Sísmico Venezuela](https://disastersesriven.maps.arcgis.com/apps/dashboards/8457c6fde45c4b9e921aff896474bc47)
+* **Enlace al dashboard original**: [Monitoreo Sísmico Venezuela](https://disastersesriven.maps.arcgis.com/apps/dashboards/8457c6fde45c4b9e921aff896474bc47).
 
 ### Referencias
 
