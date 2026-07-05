@@ -3,16 +3,28 @@
 url <- 'https://services8.arcgis.com/F4wmVgGRtJMzSu8M/arcgis/rest/services/SISMICIDAD_TIEMPO_REAL/FeatureServer/0/query?f=json&outFields=EPICENTRO%2CFECHA%2CHORA_HLV%2CID_EVENTO%2CLATITUD%2CLONGITUD%2CMAGNITUD%2CPROFUNDIDAD%2COBJECTID&outSR=%7B%22wkid%22%3A102100%2C%22falseM%22%3A-100000%2C%22falseX%22%3A-20037700%2C%22falseY%22%3A-30241100%2C%22falseZ%22%3A-100000%2C%22mTolerance%22%3A0.001%2C%22mUnits%22%3A10000%2C%22xyTolerance%22%3A0.001%2C%22xyUnits%22%3A10000%2C%22zTolerance%22%3A0.001%2C%22zUnits%22%3A10000%7D&returnM=true&returnZ=true&spatialRel=esriSpatialRelIntersects&where=1%3D1'
 
 # Cargar librerías ----
-library(jsonlite)
-library(httr2)
-library(lubridate)
-library(tidyverse)
-library(sf)
-library(leaflet)
-library(leaflet.extras2)
-library(leaflegend)
-library(htmlwidgets)
-library(htmltools)
+## Función para comprobar si existen los paquetes a utilizar y cargarlos ----
+
+install_and_load <- function(pkgs){
+  missing_packages <- pkgs[!(pkgs %in% rownames(installed.packages()))]
+  
+  if(length(missing_packages)) {
+    install.packages(missing_packages)
+  }
+  
+  for(i in pkgs){
+    library(i, character.only = T)
+  }
+}
+
+## Paquetes a usar ----
+
+paquetes <- c('jsonlite','httr2','lubridate','tidyverse','sf',
+              'leaflet','leaflet.extras2','leaflegend','htmlwidgets',
+              'htmltools')
+
+## Ejecutar función ----
+install_and_load(paquetes)
 
 # Ejecutar la petición HTTP hacia la API y almacenar la respuesta del servidor ----
 req <- request(url) |>
