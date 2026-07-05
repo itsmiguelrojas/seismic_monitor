@@ -28,7 +28,7 @@ jobs:
 
       - name: 4. Instalar librerías de R
         run: |
-          Rscript -e "install.packages(c('jsonlite', 'httr2', 'lubridate', 'tidyverse', 'sf', 'leaflet', 'leaflet.extras2', 'leaflegend', 'htmlwidgets', 'htmltools'))"
+          Rscript -e "install.packages(c('jsonlite', 'httr2', 'lubridate', 'tidyverse', 'sf', 'leaflet', 'leaflet.extras2', 'leaflegend', 'htmlwidgets', 'htmltools', 'yyjsonr'))"
 
       - name: 5. Ejecutar el script extractor y mapeador
         run: |
