@@ -67,6 +67,12 @@ sismos_sf <- st_as_sf(
   crs = 4326 # Sistema de Referencia Geográfico Mundial Estándar WGS84
 )
 
+## Guardar el objeto geoespacial en un archivo GeoPackage (.gpkg) ----
+# Comprobar primero si el archivo existe o si el número de registros es diferente en el objeto sf cargado en el entorno y en el archivo
+if(!file.exists('sismos.gpkg') || nrow(st_read('sismos.gpkg', quiet = TRUE)) != nrow(sismos_sf)){
+  st_write(sismos_sf, 'sismos.gpkg', append = FALSE)
+}
+
 ## Gráfico exploratorio rápido de control para evaluar magnitudes en el tiempo ----
 sismos_df |>
   ggplot(aes(x = fecha, y = magnitud)) +
