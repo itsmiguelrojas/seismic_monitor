@@ -1,0 +1,47 @@
+name: Actualizacion Automatica del Mapa Sismico
+
+on:
+  schedule:
+    # Se ejecuta de forma automática cada 6 horas (en horario UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Esto te permite activar el servidor manualmente desde la web si deseas probarlo
+
+permissions:
+  contents: write # Otorga permiso al servidor para hacer "push" de vuelta a tu repositorio
+
+jobs:
+  run-r-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Descargar el repositorio en el servidor
+        uses: actions/checkout@v4
+
+      - name: 2. Instalar R en el servidor
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+
+      - name: 3. Instalar dependencias del sistema Linux (necesarias para el paquete 'sf')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgdal-dev libgeos-dev libproj-dev libudunits2-dev libharfbuzz-dev libfribidi-dev
+
+      - name: 4. Instalar librerías de R
+        run: |
+          Rscript -e "install.packages(c('jsonlite', 'httr2', 'lubridate', 'tidyverse', 'sf', 'leaflet', 'leaflet.extras2', 'leaflegend', 'htmlwidgets', 'htmltools'))"
+
+      - name: 5. Ejecutar el script extractor y mapeador
+        run: |
+          Rscript seismic_map.R
+
+      - name: 6. Detectar cambios, hacer Commit y Push automático
+        run: |
+          # Configurar un usuario bot simulado de GitHub
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Añadir los archivos que cambian dinámicamente
+          git add index.html sismos.gpkg
+          
+          # Verificar si el archivo cambió realmente. Si no hay sismos nuevos, evita hacer un commit vacío (lo que daría error)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "data: actualización automática de registros [skip ci]" && git push)
