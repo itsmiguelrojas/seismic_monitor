@@ -1,5 +1,13 @@
 # Mapa sísmico interactivo con deslizador temporal y contador dinámico
 
+## ⚠️ Advertencia
+
+> **Información importante:** Mi ámbito de estudio corresponde a la **biología** y no a las áreas de geología, geografía, sismología o similares. 
+> 
+> Este proyecto ha sido desarrollado con un enfoque estrictamente técnico en ciencia de datos, automatización y sistemas de información geográfica (SIG), con el único propósito de contribuir a la visualización accesible de la información tras los eventos sísmicos del 24 de junio de 2026 en Venezuela. 
+> 
+> Los datos cartográficos y de registro se extraen de fuentes oficiales. Esta plataforma es una herramienta de visualización complementaria y de código abierto la cual no debe ser utilizada como sustituto de los canales oficiales de gestión de riesgos ni para análisis geofísicos formales.
+
 Este repositorio contiene una visualización en mapa interactiva e independiente para el seguimiento de los eventos sísmicos registrados en Venezuela tras el doble terremoto del 24 de junio de 2026. Está construido en R utilizando los paquetes `leaflet` y `leaflet.extras2`, e incluye una capa personalizada en JavaScript que cuenta dinámicamente los registros activos y recalcula las ventanas de tiempo sobre la marcha, **sin necesidad de un servidor o backend en Shiny.**
 
 ## Estructura del repositorio
