@@ -1,6 +1,6 @@
 # URL de consulta a la API REST de ArcGIS de Esri Venezuela.
 # Filtra y extrae en formato JSON los campos esenciales de sismicidad en tiempo real de FUNVISIS.
-url <- 'https://services8.arcgis.com/F4wmVgGRtJMzSu8M/arcgis/rest/services/SISMICIDAD_TIEMPO_REAL/FeatureServer/0/query?f=json&outFields=EPICENTRO%2CFECHA%2CHORA_HLV%2CID_EVENTO%2CLATITUD%2CLONGITUD%2CMAGNITUD%2CPROFUNDIDAD%2COBJECTID&outSR=%7B%22wkid%22%3A102100%2C%22falseM%22%3A-100000%2C%22falseX%22%3A-20037700%2C%22falseY%22%3A-30241100%2C%22falseZ%22%3A-100000%2C%22mTolerance%22%3A0.001%2C%22mUnits%22%3A10000%2C%22xyTolerance%22%3A0.001%2C%22xyUnits%22%3A10000%2C%22zTolerance%22%3A0.001%2C%22zUnits%22%3A10000%7D&returnM=true&returnZ=true&spatialRel=esriSpatialRelIntersects&where=1%3D1'
+url <- 'https://services8.arcgis.com/F4wmVgGRtJMzSu8M/arcgis/rest/services/SISMICIDAD_TIEMPO_REAL/FeatureServer/0/query'
 
 # Cargar librerías ----
 ## Función para comprobar si existen los paquetes a utilizar y cargarlos ----
@@ -27,19 +27,62 @@ paquetes <- c('jsonlite','httr2','lubridate','tidyverse','sf',
 install_and_load(paquetes)
 
 # Ejecutar la petición HTTP hacia la API y almacenar la respuesta del servidor ----
-req <- request(url) |>
-  req_perform()
+
+## Lista vacía para almacenar las estructuras de datos (dataframes) de cada página ----
+todos_los_sismos <- list()
+
+## Tamaño del lote por petición (Alineado con el límite estándar del servidor) ----
+record_count <- 1000  
+
+## Puntero inicial para la paginación (Indica cuántos registros saltarse) ----
+offset <- 0
+
+## Bandera de control para mantener activo el bucle de descarga ----
+descargando <- TRUE
+
+## Construir la petición con paginación explícita ----
+while(descargando) {
+  # Construir la petición con paginación explícita
+  req <- request(url) |> 
+    req_url_query(
+      f = "json", # Formato de respuesta
+      where = "1=1", # Condición booleana para traer todo
+      outFields = "EPICENTRO,FECHA,HORA_HLV,ID_EVENTO,LATITUD,LONGITUD,MAGNITUD,PROFUNDIDAD,OBJECTID",
+      outSR = '{"wkid":4326}', # Traer geometría WGS84
+      resultRecordCount = record_count, # Límite de filas para esta iteración
+      resultOffset = offset # Desplazamiento actual de la página
+    )
+  
+  # Ejecutar la petición y procesar la respuesta
+  resp <- req_perform(req)
+  
+  # Extraer el cuerpo de la respuesta como texto y aplanar el JSON jerárquico 
+  contenido <- resp_body_string(resp) |> fromJSON(flatten = TRUE)
+  
+  # Extraer la matriz de características (atributos geográficos y tabulares)
+  features <- contenido$features
+  
+  #  Control de flujo y persistencia en memoria de la página actual
+  if (length(features) > 0 && nrow(features) > 0) {
+    # Guardar la tanda actual
+    todos_los_sismos[[length(todos_los_sismos) + 1]] <- features
+    
+    # Mover el puntero para la siguiente página
+    offset <- offset + record_count
+    message(paste("Descargados registros hasta el índice:", offset))
+  } else {
+    # Si ya no vienen más características, detenemos el bucle
+    descargando <- FALSE
+  }
+}
+
+# Unificar todas las páginas en un único dataframe
+sismos_df <- do.call(rbind, todos_los_sismos)
 
 # PROCESAMIENTO Y LIMPIEZA DE DATOS ----
 
-## Convertir la respuesta binaria de la API en una cadena de texto plana ----
-datos_texto <- resp_body_string(req)
-
-## Deserializar el texto JSON plano en una estructura de listas anidadas de R ----
-puntos <- jsonlite::fromJSON(datos_texto, flatten = TRUE)
-
 ## Extraer el dataframe de registros ('features') y limpiar los atributos tabulares ----
-sismos_df <- puntos[['features']] |>
+sismos_df <- sismos_df |>
   as_tibble() |>
   # Seleccionar únicamente las columnas de interés técnico
   select(
