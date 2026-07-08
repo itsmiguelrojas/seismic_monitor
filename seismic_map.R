@@ -81,12 +81,6 @@ sismos_sf <- st_as_sf(
   crs = 4326 # Sistema de Referencia Geográfico Mundial Estándar WGS84
 )
 
-## Guardar el objeto geoespacial en un archivo GeoPackage (.gpkg) ----
-# Comprobar primero si el archivo existe o si el número de registros es diferente en el objeto sf cargado en el entorno y en el archivo
-if(!file.exists('sismos.gpkg') || nrow(st_read('sismos.gpkg', quiet = TRUE)) < nrow(sismos_sf)){
-  st_write(sismos_sf, 'sismos.gpkg', append = FALSE)
-}
-
 ## Gráfico exploratorio rápido de control para evaluar magnitudes en el tiempo ----
 #sismos_df |>
 #  ggplot(aes(x = fecha, y = magnitud)) +
@@ -302,5 +296,22 @@ metadatos <- tags$head(
 ## Poner los metadatos en la cabecera del widget de Leaflet ----
 mapa_con_meta <- htmlwidgets::prependContent(objeto_mapa, metadatos)
 
-## Exportar el archivo index.html definitivo ----
-htmlwidgets::saveWidget(mapa_con_meta, 'index.html', selfcontained = TRUE, title = 'Monitoreo Sísmico Venezuela - Mapa Interactivo')
+## Guardar el objeto geoespacial en un archivo GeoPackage (.gpkg) ----
+# Comprobar primero si el archivo existe o si el número de registros es diferente en el objeto sf cargado en el entorno y en el archivo
+if(!file.exists('sismos.gpkg') || nrow(st_read('sismos.gpkg', quiet = TRUE)) < nrow(sismos_sf)){
+  message("🔄 Se detectaron sismos nuevos. Actualizando base de datos y mapa...")
+  
+  # 1. Guardar el objeto geoespacial actualizado
+  st_write(sismos_sf, 'sismos.gpkg', append = FALSE)
+  
+  # 2. Generar y guardar el HTML definitivo SÓLO si hay datos nuevos
+  htmlwidgets::saveWidget(
+    widget = mapa_con_meta,
+    file = "index.html",
+    selfcontained = TRUE,
+    title = "Monitoreo Sísmico Venezuela - Mapa Interactivo"
+  )
+  
+} else {
+  message("✅ No hay sismos nuevos. El repositorio se mantiene sin cambios.")
+}
