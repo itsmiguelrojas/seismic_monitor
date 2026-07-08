@@ -246,7 +246,7 @@ objeto_mapa <- leaflet() |>
   addProviderTiles('Esri.WorldImagery', group = 'ESRI World Imagery') |>
   # Agregar capa estándar asignando los créditos de propiedad intelectual correspondientes
   addTiles(
-    attribution = 'Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>'
+    attribution = 'Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>'
   ) |>
   # Incorporación y mapeo del slider de tiempo
   addTimeslider(
