@@ -67,7 +67,9 @@ sismos_df <- sismos_df |>
     
     # Control de calidad y corrección de offsets/errores tipográficos de coordenadas de la API original
     longitud = if_else(longitud == -21.42, -61.42, longitud),
-    latitud = if_else(latitud == 16.65, 10.65, latitud)
+    latitud = if_else(latitud == 16.65, 10.65, latitud),
+    # Agrupar las magnitudes por grupos de escala y crear factor de magnitud
+    magnitud_grupo = cut(magnitud, breaks = 1:8, right = F, labels = 1:7)
   ) |>
   select(-hora) |> # Descartar columna intermedia de hora ya unificada
   arrange(fecha) # Ordenar cronológicamente para el correcto funcionamiento del slider
@@ -81,14 +83,14 @@ sismos_sf <- st_as_sf(
 
 ## Guardar el objeto geoespacial en un archivo GeoPackage (.gpkg) ----
 # Comprobar primero si el archivo existe o si el número de registros es diferente en el objeto sf cargado en el entorno y en el archivo
-if(!file.exists('sismos.gpkg') || nrow(st_read('sismos.gpkg', quiet = TRUE)) != nrow(sismos_sf)){
+if(!file.exists('sismos.gpkg') || nrow(st_read('sismos.gpkg', quiet = TRUE)) < nrow(sismos_sf)){
   st_write(sismos_sf, 'sismos.gpkg', append = FALSE)
 }
 
 ## Gráfico exploratorio rápido de control para evaluar magnitudes en el tiempo ----
-sismos_df |>
-  ggplot(aes(x = fecha, y = magnitud)) +
-  geom_line()
+#sismos_df |>
+#  ggplot(aes(x = fecha, y = magnitud)) +
+#  geom_line()
 
 # DISEÑO DE INTERFACES DE USUARIO ----
 
@@ -195,8 +197,9 @@ function(el, x) {
     }
 "
 
-## Definir la paleta continua basada en tonalidades rojas mapeada según la magnitud física ----
-pal <- leaflet::colorNumeric('Reds', domain = sismos_df$magnitud, reverse = F)
+## Definir la paleta discreta basada en tonalidades de verde a rojo mapeada según la magnitud física ----
+palFactor <- c('#03c700','#75b600','#a0a300','#bf8d00','#d77400','#ed5200','#ff0000')
+pal <- leaflet::colorFactor(palFactor, domain = sismos_df$magnitud_grupo, reverse = F)
 
 ## Visualización en Leaflet ----
 objeto_mapa <- leaflet() |>
@@ -222,7 +225,7 @@ objeto_mapa <- leaflet() |>
     radius = ~magnitud*2,
     weight = 2,
     color = 'black',
-    fillColor = ~pal(magnitud),
+    fillColor = ~pal(magnitud_grupo),
     fillOpacity = 0.8,
     # Construcción de la estructura e información de los Popups usando tablas HTML
     popup = ~paste(
@@ -254,15 +257,16 @@ objeto_mapa <- leaflet() |>
     className = 'map-title'
   ) |>
   # Poner barra de escala cromática de magnitudes horizontal
-  addLegendNumeric(
+  addLegendFactor(
     data = sismos_sf,
     pal = pal,
-    values = ~magnitud,
+    values = ~magnitud_grupo,
+    shape = 'circle',
     title = 'Magnitud',
     orientation = 'horizontal',
-    position = 'bottomleft',
-    width = 150,
-    height = 15 
+    position = 'bottomleft'
+    #width = 150,
+    #height = 15
   ) |>
   # Configurar opciones de interacción, activación e intercambio de mapas base
   addLayersControl(
