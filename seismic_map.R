@@ -257,16 +257,14 @@ objeto_mapa <- leaflet() |>
     values = ~magnitud_grupo,
     shape = 'circle',
     title = 'Magnitud',
-    orientation = 'horizontal',
+    orientation = 'vertical',
     position = 'bottomleft'
-    #width = 150,
-    #height = 15
   ) |>
   # Configurar opciones de interacción, activación e intercambio de mapas base
   addLayersControl(
     baseGroups = c('CyclOSM','CartoDB Dark Matter','ESRI World Imagery'),
     options = layersControlOptions(collapsed = FALSE),
-    position = 'bottomleft'
+    position = 'bottomright'
   ) |>
   # Invocar y compilar el callback de Javascript para activar la lógica del contador
   onRender(js_contador)
@@ -293,8 +291,15 @@ metadatos <- tags$head(
   tags$meta(name = 'twitter:image', content = 'https://raw.githubusercontent.com/itsmiguelrojas/seismic_monitor/main/main.png')
 )
 
+## Subir altura de la leyenda con margin-bottom ----
+estilo_leyenda <- tags$style(HTML('
+  .info.legend.leaflet-control {
+    margin-bottom: 4.5em !important;
+  }
+'))
+
 ## Poner los metadatos en la cabecera del widget de Leaflet ----
-mapa_con_meta <- htmlwidgets::prependContent(objeto_mapa, metadatos)
+mapa_con_meta <- htmlwidgets::prependContent(objeto_mapa, metadatos, estilo_leyenda)
 
 ## Guardar el objeto geoespacial en un archivo GeoPackage (.gpkg) ----
 # Comprobar primero si el archivo existe o si el número de registros es diferente en el objeto sf cargado en el entorno y en el archivo
