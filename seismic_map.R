@@ -147,6 +147,32 @@ map_title <- tags$style(HTML('
   }
 '))
 
+## Extraer los niveles del factor de magnitudes ----
+niveles_grupos <- levels(sismos_sf$magnitud_grupo)
+
+## Crear una lista de checkboxes HTML dinámicamente
+opciones_checkbox_html <- paste0(
+  '<label style="display: block; margin-bottom: 6px; font-size: 12px; color: #333; cursor: pointer; user-select: none;">',
+  '<input type="checkbox" class="filtro-grupo-chk" value="', niveles_grupos, '" checked style="margin-right: 6px; vertical-align: middle; cursor: pointer;">',
+  niveles_grupos,
+  '</label>',
+  collapse = '\n'
+)
+
+## Ensamblar usando <details> y <summary> para el efecto desplegable nativo
+filtro_mag_html <- paste0(
+  '<details id="control-filtro-magnitud" style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 1px 5px rgba(0,0,0,0.4); font-family: Arial, sans-serif; min-width: 160px; user-select: none;">',
+  # El elemento <summary> actúa como el botón del menú desplegable
+  '<summary style="font-weight: bold; font-size: 13px; color: #333; cursor: pointer; outline: none; display: flex; justify-content: space-between; align-items: center;">',
+  'Filtrar por Grupo <span style="font-size: 9px; color: #888; margin-left: 8px;">▼</span>',
+  '</summary>',
+  # Contenedor interno que se ocultará/mostrará. Incluye scroll por si hay muchos elementos
+  '<div class="menu-content" style="margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px; max-height: 150px; overflow-y: auto;">',
+  opciones_checkbox_html,
+  '</div>',
+  '</details>'
+)
+
 ## Crear el contenedor div físico que encapsula el título del mapa ----
 title_div <- tags$div(
   map_title,
@@ -234,6 +260,68 @@ function(el, x) {
     }
 "
 
+## Script de JavaScript para filtrar magnitudes ----
+js_filtro_magnitud <- "
+function(el, x) {
+  var map = this;
+  var contenedorFiltro = el.querySelector('#control-filtro-magnitud');
+
+  // BLINDAJE DE INTERFAZ: Evita que el mapa responda a clics o scroll hechos dentro del menú
+  if (contenedorFiltro) {
+    L.DomEvent.disableClickPropagation(contenedorFiltro);
+    L.DomEvent.disableScrollPropagation(contenedorFiltro);
+  }
+
+  // Función para capturar los valores de las casillas marcadas
+  function obtenerGruposActivos() {
+    var checkboxes = el.querySelectorAll('.filtro-grupo-chk');
+    var activos = [];
+    checkboxes.forEach(function(chk) {
+      if (chk.checked) {
+        activos.push(chk.value);
+      }
+    });
+    return activos;
+  }
+
+  // Lógica de evaluación estética de los sismos
+  function aplicarFiltro(layer) {
+    if (layer.feature && layer.feature.properties && typeof layer.feature.properties.magnitud_grupo !== 'undefined') {
+      
+      var grupoSismo = layer.feature.properties.magnitud_grupo;
+      var magFisica = layer.feature.properties.magnitud;
+      var gruposSeleccionados = obtenerGruposActivos();
+      
+      var matches = gruposSeleccionados.includes(grupoSismo);
+
+      if (matches) {
+        if (layer.setRadius) layer.setRadius(magFisica * 2);
+        if (layer.setStyle) layer.setStyle({ opacity: 0.5, fillOpacity: 0.8 });
+      } else {
+        if (layer.setRadius) layer.setRadius(0);
+        if (layer.setStyle) layer.setStyle({ opacity: 0, fillOpacity: 0 });
+      }
+    }
+  }
+
+  // Escuchar eventos de cambio en los checkboxes
+  if (contenedorFiltro) {
+    contenedorFiltro.addEventListener('change', function(e) {
+      if (e.target.classList.contains('filtro-grupo-chk')) {
+        map.eachLayer(function(layer) {
+          aplicarFiltro(layer);
+        });
+      }
+    });
+  }
+
+  // Sincronización continua con el addTimeslider
+  map.on('layeradd', function(e) {
+    aplicarFiltro(e.layer);
+  });
+}
+"
+
 ## Definir la paleta discreta basada en tonalidades de verde a rojo mapeada según la magnitud física ----
 palFactor <- c('#03c700','#75b600','#a0a300','#bf8d00','#d77400','#ed5200','#ff0000')
 pal <- leaflet::colorFactor(palFactor, domain = sismos_df$magnitud_grupo, reverse = F)
@@ -293,6 +381,12 @@ objeto_mapa <- leaflet() |>
     position = 'topleft',
     className = 'map-title'
   ) |>
+  # Pasar el HTML dinámico con los grupos de magnitud
+  addControl(
+    html = filtro_mag_html,
+    position = 'topleft',
+    className = 'map-filter'
+  ) |>
   # Poner barra de escala cromática de magnitudes horizontal
   addLegendFactor(
     data = sismos_sf,
@@ -300,8 +394,8 @@ objeto_mapa <- leaflet() |>
     values = ~magnitud_grupo,
     shape = 'circle',
     title = 'Magnitud',
-    orientation = 'vertical',
-    position = 'bottomleft'
+    orientation = 'horizontal',
+    position = 'bottomright'
   ) |>
   # Configurar opciones de interacción, activación e intercambio de mapas base
   addLayersControl(
@@ -310,12 +404,14 @@ objeto_mapa <- leaflet() |>
     position = 'bottomright'
   ) |>
   # Invocar y compilar el callback de Javascript para activar la lógica del contador
-  onRender(js_contador)
+  onRender(js_contador) |> 
+  # Acoplar la lógica de filtrado por niveles de magnitud
+  onRender(js_filtro_magnitud)
 
 ## Definir las etiquetas meta que irán dentro del <head> del HTML final ----
 metadatos <- tags$head(
   # Metadatos Estándar
-  tags$meta(name = 'viewport', content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content'),
+  tags$meta(name = 'viewport', content = 'width=device-width, initial-scale=0.9, maximum-scale=0.9, user-scalable=no, interactive-widget=resizes-content'),
   tags$meta(name = 'keywords', content = 'sismos, venezuela, funvisis, leaflet, rstats, mapa interactivo, sismicidad'),
   tags$meta(name = 'author', content = 'itsmiguelrojas'),
   
@@ -335,14 +431,22 @@ metadatos <- tags$head(
 )
 
 ## Subir altura de la leyenda con margin-bottom ----
-estilo_leyenda <- tags$style(HTML('
-  .info.legend.leaflet-control {
-    margin-bottom: 4.5em !important;
+estilo_adicional <- tags$style(HTML('
+  details#control-filtro-magnitud {
+    margin-top: 5em !important;
+  }
+  
+  .leaflet-control.map-title {
+    margin-top: 1.2em !important;
+  }
+  
+  .menu-content {
+    height: 100px;
   }
 '))
 
 ## Poner los metadatos en la cabecera del widget de Leaflet ----
-mapa_con_meta <- htmlwidgets::prependContent(objeto_mapa, metadatos, estilo_leyenda)
+mapa_con_meta <- htmlwidgets::prependContent(objeto_mapa, metadatos, estilo_adicional)
 
 ## Guardar el objeto geoespacial en un archivo GeoPackage (.gpkg) ----
 # Comprobar primero si el archivo existe o si el número de registros es diferente en el objeto sf cargado en el entorno y en el archivo
