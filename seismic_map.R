@@ -297,9 +297,19 @@ function(el, x) {
       if (matches) {
         if (layer.setRadius) layer.setRadius(magFisica * 2);
         if (layer.setStyle) layer.setStyle({ opacity: 0.5, fillOpacity: 0.8 });
+        
+        // Habilitar clics y hovers si el sismo pasa el filtro
+        if (layer.getElement && layer.getElement()) {
+          layer.getElement().style.pointerEvents = 'auto';
+        }
       } else {
         if (layer.setRadius) layer.setRadius(0);
         if (layer.setStyle) layer.setStyle({ opacity: 0, fillOpacity: 0 });
+        
+        // Desactivar por completo los clics y hovers si el sismo está oculto
+        if (layer.getElement && layer.getElement()) {
+          layer.getElement().style.pointerEvents = 'none';
+        }
       }
     }
   }
