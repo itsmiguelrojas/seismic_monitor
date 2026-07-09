@@ -27,6 +27,15 @@ Este repositorio contiene una visualización en mapa interactiva e independiente
 
 ---
 
+## Sugerencias y colaboraciones
+
+La evolución técnica de esta visualización se ha beneficiado del intercambio de ideas y el control de calidad por parte de pares académicos, y está bajo constante desarrollo. A continuación, se presenta una lista de sugerencias:
+
+|Sugerido por|Sugerencia|Características|
+|:---|:---|:---|
+|[Mariangel Milano](linkedin.com/in/mariangel-milano-espinoza-a47419188)|Filtro desplegable por grupos de magnitud|<ul><li>Contenedor flotante nativo basado en etiquetas HTML5 `<details>` y `<summary>` para un despliegue ligero en dispositivos móviles, acompañado de casillas de verificación dinámicas.</li><li>Para resolver las limitaciones de Leaflet sobre elementos ocultos (<code>opacity: 0</code>), se inyectó una propiedad en el árbol DOM (<code>pointer-events: none/auto</code>) que previene la activación accidental de popups "fantasma" de sismos que han sido desactivados visualmente en el panel.</li></ul>|
+---
+
 ## Configuración e instalación
 
 Para ejecutar este script localmente, asegúrate de tener instalado R o RStudio junto con las siguientes dependencias:
