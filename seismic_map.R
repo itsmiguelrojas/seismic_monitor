@@ -338,14 +338,10 @@ pal <- leaflet::colorFactor(palFactor, domain = sismos_df$magnitud_grupo, revers
 
 ## Visualización en Leaflet ----
 objeto_mapa <- leaflet() |>
-  # Mapas base intercambiables desde proveedores globales externos
-  addProviderTiles('CyclOSM', group = 'CyclOSM') |>
-  addProviderTiles('CartoDB.DarkMatter', group = 'CartoDB Dark Matter') |>
-  addProviderTiles('Esri.WorldImagery', group = 'ESRI World Imagery') |>
-  # Agregar capa estándar asignando los créditos de propiedad intelectual correspondientes
-  addTiles(
-    attribution = 'Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>'
-  ) |>
+  # Mapas base intercambiables desde proveedores globales externos y asignación de los créditos de propiedad intelectual correspondientes
+  addProviderTiles('CyclOSM', group = 'CyclOSM', options = providerTileOptions(attribution = 'Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>')) |>
+  addProviderTiles('CartoDB.DarkMatter', group = 'CartoDB Dark Matter', options = providerTileOptions(attribution = 'Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>')) |>
+  addProviderTiles('Esri.WorldImagery', group = 'ESRI World Imagery', options = providerTileOptions(attribution = 'Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>')) |>
   # Incorporación y mapeo del slider de tiempo
   addTimeslider(
     data = sismos_sf,
