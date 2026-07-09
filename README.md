@@ -27,7 +27,7 @@ Este repositorio contiene una visualización en mapa interactiva e independiente
 
 ---
 
-## Sugerencias y colaboraciones
+## Sugerencias
 
 La evolución técnica de esta visualización se ha beneficiado del intercambio de ideas y el control de calidad por parte de pares académicos, y está bajo constante desarrollo. A continuación, se presenta una lista de sugerencias:
 
