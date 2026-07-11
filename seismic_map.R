@@ -131,206 +131,11 @@ sismos_sf <- st_as_sf(
 
 # DISEÑO DE INTERFACES DE USUARIO ----
 
-## Inyectar estilos CSS específicos para posicionar y flotar el título del mapa de manera fija ----
-map_title <- tags$style(HTML('
-  .leaflet-control.map-title { 
-    position: fixed !important; 
-    left: 50%; 
-    transform: translateX(-50%);
-    text-align: center; 
-    padding-left: 10px; 
-    padding-right: 10px; 
-    background: rgba(255,255,255,0.75); 
-    font-weight: bold; 
-    font-size: 24px;
-    border-radius: 4px;
-  }
-'))
+## Cargar estructura de elementos HTML ----
+source('html/estructura_html.R')
 
-## Extraer los niveles del factor de magnitudes ----
-niveles_grupos <- levels(sismos_sf$magnitud_grupo)
-
-## Crear una lista de checkboxes HTML dinámicamente
-opciones_checkbox_html <- paste0(
-  '<label style="display: block; margin-bottom: 6px; font-size: 12px; color: #333; cursor: pointer; user-select: none;">',
-  '<input type="checkbox" class="filtro-grupo-chk" value="', niveles_grupos, '" checked style="margin-right: 6px; vertical-align: middle; cursor: pointer;">',
-  niveles_grupos,
-  '</label>',
-  collapse = '\n'
-)
-
-## Ensamblar usando <details> y <summary> para el efecto desplegable nativo
-filtro_mag_html <- paste0(
-  '<details id="control-filtro-magnitud" style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 1px 5px rgba(0,0,0,0.4); font-family: Arial, sans-serif; min-width: 160px; user-select: none;">',
-  # El elemento <summary> actúa como el botón del menú desplegable
-  '<summary style="font-weight: bold; font-size: 13px; color: #333; cursor: pointer; outline: none; display: flex; justify-content: space-between; align-items: center;">',
-  'Filtrar por Grupo <span style="font-size: 9px; color: #888; margin-left: 8px;">▼</span>',
-  '</summary>',
-  # Contenedor interno que se ocultará/mostrará. Incluye scroll por si hay muchos elementos
-  '<div class="menu-content" style="margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px; max-height: 150px; overflow-y: auto;">',
-  opciones_checkbox_html,
-  '</div>',
-  '</details>'
-)
-
-## Crear el contenedor div físico que encapsula el título del mapa ----
-title_div <- tags$div(
-  map_title,
-  HTML('Monitoreo Sísmico Venezuela')
-)
-
-## Script de JavaScript para controlador y contador dinámico ----
-js_contador <- "
-function(el, x) {
-      var map = this;
-      
-      // 1. Crear y definir el contenedor personalizado en el mapa
-      var counterControl = L.control({position: 'bottomright'});
-      
-      counterControl.onAdd = function (map) {
-        this._div = L.DomUtil.create('div', 'dynamic-counter-box'); 
-        
-        // Estilos CSS directos para dar apariencia de widget o caja de visualización
-        this._div.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
-        this._div.style.padding = '12px 16px';
-        this._div.style.borderRadius = '8px';
-        this._div.style.boxShadow = '0 3px 8px rgba(0,0,0,0.25)';
-        this._div.style.fontSize = '13px';
-        this._div.style.fontFamily = 'Helvetica, Arial, sans-serif';
-        this._div.style.color = '#2c3e50';
-        this._div.style.border = '1px solid #bdc3c7';
-        this._div.style.lineHeight = '1.6';
-        
-        this.update(0, 'N/A', 'N/A');
-        return this._div;
-      };
-      
-      // Función interna para actualizar el código HTML según los datos calculados
-      counterControl.update = function (count, start, finish) {
-        this._div.innerHTML = 
-          '<div style=\"font-weight: bold; font-size: 14px; margin-bottom: 6px; border-bottom: 2px solid #ecf0f1; padding-bottom: 4px;\">📊 Ventana sísmica</div>' +
-          '🔢 <b>Eventos registrados:</b> ' + count + '<br>' +
-          '⏱️ <b>Desde:</b> <span style=\"color: #2980b9; font-weight: bold;\">' + start + '</span><br>' +
-          '🏁 <b>Hasta:</b> <span style=\"color: #c0392b; font-weight: bold;\">' + finish + '</span>';
-      };
-      
-      counterControl.addTo(map);
-      
-      // 2. Lógica para rastrear, extraer y ordenar marcas temporales del mapa en vivo
-      var countTimeout;
-      function recalculateRecords() {
-        clearTimeout(countTimeout);
-        
-        // Retrasar el cálculo 40ms para asegurar fluidez de fotogramas al arrastrar el slider
-        countTimeout = setTimeout(function() {
-          var count = 0;
-          var activeTimes = []; // Matriz contenedora de marcas de tiempo visibles
-          
-          map.eachLayer(function (layer) {
-            // Verificar estrictamente que la capa corresponda a un marcador sísmico con propiedad 'fecha'
-            if (layer.feature && layer.feature.properties && layer.feature.properties.fecha) {
-              count++;
-              activeTimes.push(layer.feature.properties.fecha);
-            }
-          });
-          
-          var startTime = 'N/A';
-          var finishTime = 'N/A';
-          
-          // Si hay capas visibles en pantalla, ordenar alfabéticamente para hallar los límites temporales
-          if (activeTimes.length > 0) {
-            activeTimes.sort(); // Alphabetic sort works perfectly for YYYY-MM-DD HH:MM:SS structures
-            startTime = activeTimes[0];
-            finishTime = activeTimes[activeTimes.length - 1];
-          }
-          
-          // Enviar los resultados finales a la interfaz gráfica de la caja
-          counterControl.update(count, startTime, finishTime);
-        }, 40); // 40ms debounce to optimize render scrolling frame rates
-      }
-      
-      // 3. Capturar eventos de adición/remoción de capas generados por el Timeslider
-      map.on('layeradd layerremove', function(e) {
-        if (e.layer && e.layer.feature) {
-          recalculateRecords();
-        }
-      });
-      // Ejecutar inicialización única al cargar por primera vez el mapa
-      recalculateRecords();
-    }
-"
-
-## Script de JavaScript para filtrar magnitudes ----
-js_filtro_magnitud <- "
-function(el, x) {
-  var map = this;
-  var contenedorFiltro = el.querySelector('#control-filtro-magnitud');
-
-  // BLINDAJE DE INTERFAZ: Evita que el mapa responda a clics o scroll hechos dentro del menú
-  if (contenedorFiltro) {
-    L.DomEvent.disableClickPropagation(contenedorFiltro);
-    L.DomEvent.disableScrollPropagation(contenedorFiltro);
-  }
-
-  // Función para capturar los valores de las casillas marcadas
-  function obtenerGruposActivos() {
-    var checkboxes = el.querySelectorAll('.filtro-grupo-chk');
-    var activos = [];
-    checkboxes.forEach(function(chk) {
-      if (chk.checked) {
-        activos.push(chk.value);
-      }
-    });
-    return activos;
-  }
-
-  // Lógica de evaluación estética de los sismos
-  function aplicarFiltro(layer) {
-    if (layer.feature && layer.feature.properties && typeof layer.feature.properties.magnitud_grupo !== 'undefined') {
-      
-      var grupoSismo = layer.feature.properties.magnitud_grupo;
-      var magFisica = layer.feature.properties.magnitud;
-      var gruposSeleccionados = obtenerGruposActivos();
-      
-      var matches = gruposSeleccionados.includes(grupoSismo);
-
-      if (matches) {
-        if (layer.setRadius) layer.setRadius(magFisica * 2);
-        if (layer.setStyle) layer.setStyle({ opacity: 0.5, fillOpacity: 0.8 });
-        
-        // Habilitar clics y hovers si el sismo pasa el filtro
-        if (layer.getElement && layer.getElement()) {
-          layer.getElement().style.pointerEvents = 'auto';
-        }
-      } else {
-        if (layer.setRadius) layer.setRadius(0);
-        if (layer.setStyle) layer.setStyle({ opacity: 0, fillOpacity: 0 });
-        
-        // Desactivar por completo los clics y hovers si el sismo está oculto
-        if (layer.getElement && layer.getElement()) {
-          layer.getElement().style.pointerEvents = 'none';
-        }
-      }
-    }
-  }
-
-  // Escuchar eventos de cambio en los checkboxes
-  if (contenedorFiltro) {
-    contenedorFiltro.addEventListener('change', function(e) {
-      if (e.target.classList.contains('filtro-grupo-chk')) {
-        map.eachLayer(function(layer) {
-          aplicarFiltro(layer);
-        });
-      }
-    });
-  }
-
-  // Sincronización continua con el addTimeslider
-  map.on('layeradd', function(e) {
-    aplicarFiltro(e.layer);
-  });
-}
-"
+## Cargar funciones de JavaScript para el contador dinámico y el filtro de magnitud ----
+source('javascript/funciones_js.R')
 
 ## Definir la paleta discreta basada en tonalidades de verde a rojo mapeada según la magnitud física ----
 palFactor <- c('#03c700','#75b600','#a0a300','#bf8d00','#d77400','#ed5200','#ff0000')
@@ -389,9 +194,8 @@ objeto_mapa <- leaflet() |>
   ) |>
   # Pasar el HTML dinámico con los grupos de magnitud
   addControl(
-    html = filtro_mag_html,
-    position = 'topleft',
-    className = 'map-filter'
+    html = panel_unificado,
+    position = 'topleft'
   ) |>
   # Poner barra de escala cromática de magnitudes horizontal
   addLegendFactor(
@@ -414,42 +218,11 @@ objeto_mapa <- leaflet() |>
   # Acoplar la lógica de filtrado por niveles de magnitud
   onRender(js_filtro_magnitud)
 
-## Definir las etiquetas meta que irán dentro del <head> del HTML final ----
-metadatos <- tags$head(
-  # Metadatos Estándar
-  tags$meta(name = 'viewport', content = 'width=device-width, initial-scale=0.9, maximum-scale=0.9, user-scalable=no, interactive-widget=resizes-content'),
-  tags$meta(name = 'keywords', content = 'sismos, venezuela, funvisis, leaflet, rstats, mapa interactivo, sismicidad'),
-  tags$meta(name = 'author', content = 'itsmiguelrojas'),
-  
-  # Protocolo Open Graph (OG)
-  tags$meta(property = 'og:type', content = 'website'),
-  tags$meta(property = 'og:title', content = 'Monitoreo Sísmico Venezuela - Mapa Interactivo'),
-  tags$meta(property = 'og:description', content = 'Visualización interactiva y filtrado temporal de eventos sísmicos.'),
-  tags$meta(property = 'og:url', content = 'https://itsmiguelrojas.github.io/seismic_monitor/'),
-  tags$meta(property = 'og:image', content = 'https://raw.githubusercontent.com/itsmiguelrojas/seismic_monitor/main/main.png'),
-  tags$meta(property = 'og:image:alt', content = "Vista previa del mapa de monitoreo sísmico con controles y marcas circulares"),
-  
-  # Tarjetas de Twitter / X
-  tags$meta(name = 'twitter:card', content = 'summary_large_image'),
-  tags$meta(name = 'twitter:title', content = 'Monitoreo Sísmico Venezuela - Mapa Interactivo'),
-  tags$meta(name = 'twitter:description', content = 'Visualización interactiva y filtrado temporal de eventos sísmicos.'),
-  tags$meta(name = 'twitter:image', content = 'https://raw.githubusercontent.com/itsmiguelrojas/seismic_monitor/main/main.png')
-)
+## Metadatos ----
+source('html/metadatos.R')
 
-## Subir altura de la leyenda con margin-bottom ----
-estilo_adicional <- tags$style(HTML('
-  details#control-filtro-magnitud {
-    margin-top: 5em !important;
-  }
-  
-  .leaflet-control.map-title {
-    margin-top: 1.2em !important;
-  }
-  
-  .menu-content {
-    height: 100px;
-  }
-'))
+## Estilos CSS adicionales ----
+source('css/estilos_css.R')
 
 ## Poner los metadatos en la cabecera del widget de Leaflet ----
 mapa_con_meta <- htmlwidgets::prependContent(objeto_mapa, metadatos, estilo_adicional)
