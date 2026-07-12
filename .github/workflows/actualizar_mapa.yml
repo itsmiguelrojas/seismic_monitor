@@ -46,7 +46,7 @@ jobs:
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
           # Añadir los archivos que cambian dinámicamente
-          git add index.html sismos.gpkg
+          git add index.html sismos.geojson
           
           # Verificar si el archivo cambió realmente. Si no hay sismos nuevos, evita hacer un commit vacío (lo que daría error)
           git diff --quiet && git diff --staged --quiet || (git commit -m "data: actualización automática de registros [skip ci]" && git push)
