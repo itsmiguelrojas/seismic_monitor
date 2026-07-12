@@ -46,10 +46,14 @@ function(el, x) {
           var activeTimes = []; // Matriz contenedora de marcas de tiempo visibles
           
           map.eachLayer(function (layer) {
-            // Verificar estrictamente que la capa corresponda a un marcador sísmico con propiedad 'fecha'
-            if (layer.feature && layer.feature.properties && layer.feature.properties.fecha) {
-              count++;
-              activeTimes.push(layer.feature.properties.fecha);
+            // Validamos el sismo por su magnitud para no perder los 'sin fecha'
+            if (layer.feature && layer.feature.properties && typeof layer.feature.properties.magnitud !== 'undefined') {
+              count++; // Se incluye con éxito en el conteo de 'Eventos registrados'
+              
+              // Solo si la propiedad fecha es válida, se añade para el cálculo de los extremos del rango
+              if (layer.feature.properties.fecha) {
+                activeTimes.push(layer.feature.properties.fecha);
+              }
             }
           });
           
