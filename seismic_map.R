@@ -135,7 +135,7 @@ sismos_sf <- st_as_sf(
 source('html/estructura_html.R')
 
 ## Cargar funciones de JavaScript para el contador dinámico y el filtro de magnitud ----
-source('javascript/funciones_js.R')
+source('js/funciones_js.R')
 
 ## Definir la paleta discreta basada en tonalidades de verde a rojo mapeada según la magnitud física ----
 palFactor <- c('#03c700','#75b600','#a0a300','#bf8d00','#d77400','#ed5200','#ff0000')
@@ -229,11 +229,11 @@ mapa_con_meta <- htmlwidgets::prependContent(objeto_mapa, metadatos, estilo_adic
 
 ## Guardar el objeto geoespacial en un archivo GeoPackage (.gpkg) ----
 # Comprobar primero si el archivo existe o si el número de registros es diferente en el objeto sf cargado en el entorno y en el archivo
-if(!file.exists('sismos.gpkg') || nrow(st_read('sismos.gpkg', quiet = TRUE)) < nrow(sismos_sf)){
+if(!file.exists('sismos.geojson') || nrow(st_read('sismos.geojson', quiet = TRUE)) < nrow(sismos_sf)){
   message("🔄 Se detectaron sismos nuevos. Actualizando base de datos y mapa...")
   
   # 1. Guardar el objeto geoespacial actualizado
-  st_write(sismos_sf, 'sismos.gpkg', append = FALSE)
+  st_write(sismos_sf, 'sismos.geojson', append = FALSE)
   
   # 2. Generar y guardar el HTML definitivo SÓLO si hay datos nuevos
   htmlwidgets::saveWidget(
