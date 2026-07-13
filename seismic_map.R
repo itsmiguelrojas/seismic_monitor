@@ -233,7 +233,7 @@ if(!file.exists('sismos.geojson') || nrow(st_read('sismos.geojson', quiet = TRUE
   message("🔄 Se detectaron sismos nuevos. Actualizando base de datos y mapa...")
   
   # 1. Guardar el objeto geoespacial actualizado
-  st_write(sismos_sf, 'sismos.geojson', append = FALSE)
+  st_write(sismos_sf, 'sismos.geojson', append = FALSE, delete_dsn = TRUE)
   
   # 2. Generar y guardar el HTML definitivo SÓLO si hay datos nuevos
   htmlwidgets::saveWidget(
