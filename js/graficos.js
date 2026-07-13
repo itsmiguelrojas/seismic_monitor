@@ -317,9 +317,9 @@ function updateDashboard() {
                     outlierBackgroundColor: '#e74c3c',
                     
                     // Configuración del Jitter Plot (Renderizado de los puntos individuales distribuidos aleatoriamente)
-                    itemRadius: 3.5,
+                    itemRadius: 2.5,
                     itemStyle: 'circle',
-                    itemBackgroundColor: 'rgba(44, 62, 80, 0.7)', 
+                    itemBackgroundColor: 'rgba(44, 62, 80, 0.2)', 
                     itemBorderWidth: 0
                 }]
             },
