@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoreo Sísmico Venezuela - Estadísticas</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot@4.4.5/build/index.umd.min.js"></script>
+    <link rel="stylesheet" href="../css/estadisticas_estilos.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <h2>Sismos VE</h2>
+    </div>
+    <ul class="sidebar-links">
+        <li>
+            <a href="https://itsmiguelrojas.github.io/seismic_monitor/">
+                <span>📡</span> Monitoreo Principal
+            </a>
+        </li>
+        <li>
+            <a href="#" class="active">
+                <span>📊</span> Estadística Descriptiva
+            </a>
+        </li>
+    </ul>
+</aside>
+
+<div class="container">
+
+    <h1>Monitoreo Sísmico Venezuela - Análisis sísmico: estadística descriptiva</h1>
+    <p class="subtitle">Análisis de frecuencias y tendencias temporales con dispersión estadística</p>
+    
+    <div id="error" class="error-msg"></div>
+    <div id="loading" class="loading">Cargando datos geográficos de sismos...</div>
+    
+    <div id="dashboard" style="display: none;">
+        
+        <div class="control-panel">
+            <div class="slider-section">
+                <div class="slider-label">
+                    <span>Filtrar hasta la fecha:</span>
+                    <span id="current-date-display" class="current-date">-</span>
+                </div>
+                <div class="slider-container">
+                    <span id="start-date" class="date-bounds">-</span>
+                    <div class="dual-slider-container">
+                        <input type="range" id="date-slider-start" class="slider-start">
+                        <input type="range" id="date-slider-end" class="slider-end">
+                    </div>
+                    <span id="end-date" class="date-bounds">-</span>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <span class="filter-title">Grupos de magnitud a mostrar (sólo gráfico de barras):</span>
+                <div id="group-checkboxes-container" class="checkboxes-grid">
+                    </div>
+            </div>
+        </div>
+
+        <div class="charts-row" style="display: flex; gap: 20px; margin-bottom: 40px; flex-wrap: wrap;">
+
+            <div class="chart-container" style="flex: 1; min-width: 45%; padding-bottom: 35px;">
+                <h3>Distribución de frecuencias</h3>
+                <canvas id="magnitudeChart"></canvas>
+            </div>
+
+            <div class="chart-container" style="flex: 1; min-width: 45%; padding-bottom: 35px;">
+                <h3>Tendencia temporal</h3>
+                <canvas id="lineChart"></canvas>
+            </div>
+
+        </div>
+
+        <div class="chart-container" style="height: 500px !important;">
+            <h3>Distribución por fecha: gráfico de caja y bigotes</h3>
+            <canvas id="boxPlotChart"></canvas>
+        </div>
+        
+    </div>
+</div>
+
+<script defer src="../js/graficos.js"></script>
+</body>
+</html>

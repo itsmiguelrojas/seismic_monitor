@@ -227,18 +227,18 @@ source('css/estilos_css.R')
 ## Poner los metadatos en la cabecera del widget de Leaflet ----
 mapa_con_meta <- htmlwidgets::prependContent(objeto_mapa, metadatos, estilo_adicional)
 
-## Guardar el objeto geoespacial en un archivo GeoPackage (.gpkg) ----
+## Guardar el objeto geoespacial en un archivo GeoJSON (.geojson) ----
 # Comprobar primero si el archivo existe o si el número de registros es diferente en el objeto sf cargado en el entorno y en el archivo
 if(!file.exists('sismos.geojson') || nrow(st_read('sismos.geojson', quiet = TRUE)) < nrow(sismos_sf)){
   message("🔄 Se detectaron sismos nuevos. Actualizando base de datos y mapa...")
   
   # 1. Guardar el objeto geoespacial actualizado
-  st_write(sismos_sf, 'sismos.geojson', append = FALSE)
+  st_write(sismos_sf, 'sismos.geojson', append = FALSE, delete_dsn = TRUE)
   
   # 2. Generar y guardar el HTML definitivo SÓLO si hay datos nuevos
   htmlwidgets::saveWidget(
     widget = mapa_con_meta,
-    file = "index.html",
+    file = "map.html",
     selfcontained = TRUE,
     title = "Monitoreo Sísmico Venezuela - Mapa Interactivo"
   )

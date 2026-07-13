@@ -20,7 +20,8 @@ const colorPalette = {
 const loadingEl = document.getElementById('loading');
 const dashboardEl = document.getElementById('dashboard');
 const errorEl = document.getElementById('error');
-const slider = document.getElementById('date-slider');
+const sliderStart = document.getElementById('date-slider-start');
+const sliderEnd = document.getElementById('date-slider-end');
 const currentDateDisplay = document.getElementById('current-date-display');
 const startDateEl = document.getElementById('start-date');
 const endDateEl = document.getElementById('end-date');
@@ -70,10 +71,22 @@ async function init() {
                     if (dateStr) {
                         groupsSet.add(rawGroup);
                         
+                        // [CAMBIO 1] Extraemos y formateamos la marca de tiempo continuo (Fecha y Hora)
+                        let dateTimeStr = dateStr;
+                        let timestamp = 0;
+                        const d = new Date(rawDate);
+                        if (!isNaN(d.getTime())) {
+                            timestamp = d.getTime();
+                            const pad = (n) => String(n).padStart(2, '0');
+                            dateTimeStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                        }
+                        
                         seismicData.push({
                             magnitude: Math.round(mag * 10) / 10,
                             dateStr: dateStr,
-                            group: rawGroup
+                            dateTimeStr: dateTimeStr, // Guardamos la cadena continua
+                            group: rawGroup,
+                            timestamp: timestamp       // Guardamos el número para ordenar
                         });
 
                         if (!dataByDate[dateStr]) dataByDate[dateStr] = [];
@@ -82,6 +95,9 @@ async function init() {
                 }
             }
         });
+
+        // [CAMBIO 2] Ordenamos cronológicamente de forma estricta para evitar saltos en la línea continua
+        seismicData.sort((a, b) => a.timestamp - b.timestamp);
 
         if (seismicData.length === 0) {
             throw new Error('No se encontraron sismos con magnitudes continuas en el dataset.');
@@ -125,9 +141,13 @@ async function init() {
             checkboxesContainer.appendChild(label);
         });
 
-        slider.min = 0;
-        slider.max = uniqueDates.length - 1;
-        slider.value = uniqueDates.length - 1;
+        sliderStart.min = 0;    
+        sliderStart.max = uniqueDates.length - 1;
+        sliderStart.value = 0; // El asa izquierda inicia al principio
+
+        sliderEnd.min = 0;
+        sliderEnd.max = uniqueDates.length - 1;
+        sliderEnd.value = uniqueDates.length - 1; // El asa derecha inicia al final
         
         startDateEl.textContent = uniqueDates[0];
         endDateEl.textContent = uniqueDates[uniqueDates.length - 1];
@@ -135,7 +155,8 @@ async function init() {
         loadingEl.style.display = 'none';
         dashboardEl.style.display = 'block';
 
-        slider.addEventListener('input', updateDashboard);
+        sliderStart.addEventListener('input', updateDashboard);
+        sliderEnd.addEventListener('input', updateDashboard);
         updateDashboard();
 
     } catch (err) {
@@ -147,9 +168,22 @@ async function init() {
 }
 
 function updateDashboard() {
-    const dateIndex = parseInt(slider.value);
-    const selectedDate = uniqueDates[dateIndex];
-    currentDateDisplay.textContent = selectedDate;
+    // Validación para evitar que el slider de inicio supere al de fin
+    if (parseInt(sliderStart.value) > parseInt(sliderEnd.value)) {
+        sliderStart.value = sliderEnd.value;
+    }
+
+    const startIndex = parseInt(sliderStart.value);
+    const endIndex = parseInt(sliderEnd.value);
+
+    const startDate = uniqueDates[startIndex];
+    const endDate = uniqueDates[endIndex];
+
+    // Mostramos el rango seleccionado en el texto del dashboard
+    currentDateDisplay.textContent = `${startDate} a ${endDate}`;
+
+    // Acotamos el array de fechas discretas entre ambos índices
+    const visibleDates = uniqueDates.slice(startIndex, endIndex + 1);
 
     // =========================================================================
     // 1. PROCESAMIENTO Y ACTUALIZACIÓN DEL GRÁFICO DE BARRAS
@@ -157,7 +191,7 @@ function updateDashboard() {
     const checkedBoxes = Array.from(checkboxesContainer.querySelectorAll('input[type="checkbox"]:checked'));
     const selectedGroups = checkedBoxes.map(cb => cb.value);
     
-    const filteredDataBar = seismicData.filter(d => d.dateStr <= selectedDate && selectedGroups.includes(d.group));
+    const filteredDataBar = seismicData.filter(d => d.dateStr >= startDate && d.dateStr <= endDate && selectedGroups.includes(d.group));
 
     const counts = {};
     filteredDataBar.forEach(d => {
@@ -176,7 +210,7 @@ function updateDashboard() {
             data: {
                 labels: sortedMagnitudes.map(m => m.toFixed(1)),
                 datasets: [{
-                    label: 'Frecuencia de Sismos',
+                    label: 'Frecuencia de sismos',
                     data: frequencies,
                     backgroundColor: 'rgba(52, 152, 219, 0.75)',
                     borderColor: 'rgba(52, 152, 219, 1)',
@@ -194,73 +228,38 @@ function updateDashboard() {
     }
 
     // =========================================================================
-    // 2. PROCESAMIENTO Y ACTUALIZACIÓN DEL GRÁFICO DE LÍNEAS
+    // 2. PROCESAMIENTO Y ACTUALIZACIÓN DEL GRÁFICO DE LÍNEAS (SERIE DE TIEMPO CONTINUA)
     // =========================================================================
-    const visibleDates = uniqueDates.slice(0, dateIndex + 1);
+    const lineFilteredData = seismicData.filter(d => d.dateStr >= startDate && d.dateStr <= endDate);
     
-    // Mapeo estructurado con 'x' explicita para evitar problemas de renderizado en Chart.js
-    const lineChartData = visibleDates.map(date => ({
-        x: date, 
-        y: dailyStats[date].avg,
-        std: dailyStats[date].std
+    // Mapeo estructurado de magnitudes absolutas individuales
+    const lineChartData = lineFilteredData.map(d => ({
+        x: d.dateTimeStr, 
+        y: d.magnitude
     }));
 
+    const lineLabels = lineFilteredData.map(d => d.dateTimeStr);
+
     if (chartInstanceLine) {
-        chartInstanceLine.data.labels = visibleDates;
+        chartInstanceLine.data.labels = lineLabels;
         chartInstanceLine.data.datasets[0].data = lineChartData;
         chartInstanceLine.update();
     } else {
         chartInstanceLine = new Chart(ctxLine, {
             type: 'line',
             data: {
-                labels: visibleDates,
+                labels: lineLabels,
                 datasets: [{
-                    label: 'Promedio de Magnitud',
+                    label: 'Magnitud de sismo',
                     data: lineChartData,
-                    borderColor: '#e74c3c',         
-                    backgroundColor: 'rgba(231, 76, 60, 0.08)',
-                    borderWidth: 2,
-                    pointRadius: 3,
-                    pointBackgroundColor: '#e74c3c',
-                    tension: 0.15,
+                    borderColor: '#3498db',         
+                    backgroundColor: 'rgba(231, 76, 60, 0.05)',
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0, 
                     fill: false
                 }]
             },
-            plugins: [{
-                id: 'errorBarsPlugin',
-                afterDatasetsDraw(chart) {
-                    const { ctx, scales: { y } } = chart;
-                    const meta = chart.getDatasetMeta(0); 
-                    
-                    if (meta.hidden) return;
-
-                    meta.data.forEach((element, index) => {
-                        const rawPoint = chart.data.datasets[0].data[index];
-                        if (!rawPoint || rawPoint.std === undefined) return;
-
-                        const xPx = element.x; 
-                        const yTopPx = y.getPixelForValue(rawPoint.y + rawPoint.std);
-                        const yBottomPx = y.getPixelForValue(rawPoint.y - rawPoint.std);
-
-                        ctx.save();
-                        ctx.strokeStyle = 'rgba(44, 62, 80, 0.65)'; 
-                        ctx.lineWidth = 1.2;
-
-                        ctx.beginPath();
-                        ctx.moveTo(xPx, yTopPx);
-                        ctx.lineTo(xPx, yBottomPx);
-                        ctx.stroke();
-
-                        const capWidth = 4;
-                        ctx.beginPath();
-                        ctx.moveTo(xPx - capWidth, yTopPx); ctx.lineTo(xPx + capWidth, yTopPx);
-                        ctx.moveTo(xPx - capWidth, yBottomPx); ctx.lineTo(xPx + capWidth, yBottomPx);
-                        ctx.stroke();
-
-                        ctx.restore();
-                    });
-                }
-            }],
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -268,12 +267,9 @@ function updateDashboard() {
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            // Tooltip modificado para incluir la frecuencia exacta calculada dinámicamente
                             label: function(context) {
                                 const p = context.raw;
-                                const fechaActual = p.x;
-                                const frecuencia = seismicData.filter(d => d.dateStr === fechaActual).length;
-                                return `Promedio: ${p.y.toFixed(2)} ± ${p.std.toFixed(2)} (Desv. Est.) | Frecuencia: ${frecuencia} sismos`;
+                                return `Momento: ${p.x} | Magnitud: ${p.y.toFixed(1)}`;
                             }
                         }
                     }
@@ -281,13 +277,15 @@ function updateDashboard() {
                 scales: {
                     x: {
                         type: 'category', 
-                        title: { display: true, text: 'Cronología (Fechas)', font: { weight: 'bold' } }
+                        title: { display: true, text: 'Tiempo (fecha y hora)', font: { weight: 'bold' } },
+                        ticks: {
+                            maxTicksLimit: 8 
+                        }
                     },
                     y: {
-                        title: { display: true, text: 'Magnitud Escalar', font: { weight: 'bold' } },
-                        beginAtZero: false,
-                        suggestedMin: 0,
-                        max: 5 // Escala extendida a 5 para evitar recortes en la barra superior de error
+                        title: { display: true, text: 'Magnitud', font: { weight: 'bold' } },
+                        beginAtZero: true,
+                        suggestedMax: 5
                     }
                 }
             }
@@ -295,7 +293,7 @@ function updateDashboard() {
     }
 
     // =========================================================================
-    // 3. PROCESAMIENTO Y ACTUALIZACIÓN DEL GRÁFICO DE BOXPLOT + JITTER PLOT
+    // 3. PROCESAMIENTO Y ACTUALIZACIÓN DEL GRÁFICO DE BBOXPLOT + JITTER PLOT
     // =========================================================================
     const boxPlotData = visibleDates.map(date => dailyStats[date].rawMagnitudes || []);
 
@@ -309,12 +307,13 @@ function updateDashboard() {
             data: {
                 labels: visibleDates,
                 datasets: [{
-                    label: 'Distribución de Magnitudes',
+                    label: 'Distribución de magnitudes',
                     data: boxPlotData,
                     backgroundColor: 'rgba(52, 152, 219, 0.4)', 
                     borderColor: '#3498db',
                     borderWidth: 1.5,
                     outlierBackgroundColor: '#e74c3c',
+                    outlierRadius: 2.5,
                     
                     // Configuración del Jitter Plot (Renderizado de los puntos individuales distribuidos aleatoriamente)
                     itemRadius: 2.5,
@@ -340,7 +339,7 @@ function updateDashboard() {
                     y: {
                         title: { display: true, text: 'Magnitud', font: { weight: 'bold' } },
                         beginAtZero: true,
-                        suggestedMax: 5 // Mismo límite visual que el gráfico de líneas vecino para mantener simetría
+                        suggestedMax: 5 
                     }
                 }
             }
