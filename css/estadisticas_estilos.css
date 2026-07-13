@@ -1,0 +1,354 @@
+* {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+body {
+    background-color: #f5f7fa;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.container {
+    width: 100%;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+h1 {
+    font-size: 24px;
+    color: #2c3e50;
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: center;
+}
+h3 {
+    font-size: 16px;
+    color: #34495e;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-left: 4px solid #3498db;
+    padding-left: 10px;
+}
+p.subtitle {
+    text-align: center;
+    color: #7f8c8d;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+.control-panel {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    border: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* [NUEVO] Espaciado entre la sección del slider y los filtros */
+}
+.slider-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #34495e;
+}
+.current-date {
+    background: #3498db; /* [CAMBIO] Color azul para un tono más estadístico */
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;
+    background: #ddd;
+    outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #3498db;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+.date-bounds {
+    font-size: 12px;
+    color: #95a5a6;
+}
+
+/* [NUEVO] Estilos para el nuevo panel de filtros de magnitud grupo */
+.filter-section {
+    border-top: 1px dashed #ddd;
+    padding-top: 15px;
+}
+.filter-title {
+    font-weight: 600;
+    color: #34495e;
+    display: block;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+.checkboxes-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    background: #fff;
+    padding: 6px 12px;
+    border: 1px solid #dcdde1;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+.checkbox-label:hover {
+    background: #f1f2f6;
+}
+
+.chart-container {
+    position: relative;
+    height: 350px; /* [CAMBIO] Ajustado para que coexistan bien verticalmente ambos gráficos */
+    width: 100%;
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #f1f2f6;
+    border-radius: 8px;
+}
+.loading {
+    text-align: center;
+    font-size: 18px;
+    color: #7f8c8d;
+    padding: 50px 0;
+}
+.error-msg {
+    color: #c0392b;
+    background: #fde8e8;
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    display: none;
+}
+
+/* Contenedor relativo para alojar los sliders superpuestos */
+.dual-slider-container {
+    position: relative;
+    width: 100%;
+    height: 35px;
+    margin: 10px 0;
+    display: flex;
+    align-items: center; /* Centra verticalmente ambos componentes */
+}
+
+/* Estilo base para ambos controles */
+.dual-slider-container input[type="range"] {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    background: none; 
+    pointer-events: none; 
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Reactivar eventos del mouse ÚNICAMENTE en las asas (thumbs) */
+.dual-slider-container input[type="range"]::-webkit-slider-thumb {
+    pointer-events: auto;
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+    margin-top: -5px; /* Ajuste estándar para centrar el asa respecto a una barra de 6px */
+}
+
+.dual-slider-container input[type="range"]::-moz-range-thumb {
+    pointer-events: auto;
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+}
+
+/* [CORRECCIÓN CRÍTICA] Forzamos a que ambas barras tengan la misma altura estructural */
+.dual-slider-container input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: transparent; /* Por defecto transparente */
+}
+
+.dual-slider-container input[type="range"]::-moz-range-track {
+    height: 6px;
+    border-radius: 3px;
+    background: transparent;
+}
+
+/* Asignamos el color gris de fondo únicamente al slider de inicio */
+.dual-slider-container input[type="range"].slider-start::-webkit-slider-runnable-track {
+    background: #ddd;
+}
+.dual-slider-container input[type="range"].slider-start::-moz-range-track {
+    background: #ddd;
+}
+
+/* =========================================================================
+   ESTILOS PARA EL PANEL LATERAL IZQUIERDO (SIDEBAR)
+   ========================================================================= */
+
+/* Modificación al contenedor global de la página para dar espacio al menú */
+body {
+    margin: 0;
+    padding-left: 260px; /* Mueve el .container hacia la derecha dejando un margen limpio */
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Contenedor del panel lateral fijo */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    height: 100vh;
+    background-color: #2c3e50; /* Color oscuro corporativo/dashboard */
+    color: #ffffff;
+    padding: 25px 15px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Título o marca del panel */
+.sidebar-brand h2 {
+    margin: 0 0 30px 10px;
+    font-size: 1.4rem;
+    color: #ecf0f1;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #34495e;
+    padding-bottom: 15px;
+}
+
+/* Lista de hipervínculos */
+.sidebar-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-links li {
+    margin-bottom: 12px;
+}
+
+.sidebar-links a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #bdc3c7;
+    text-decoration: none;
+    padding: 12px 15px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+/* Efectos hover comunes */
+.sidebar-links a:hover {
+    background-color: #34495e;
+    color: #ffffff;
+}
+
+/* Clase activa para identificar la página actual (Estadísticas) */
+.sidebar-links a.active {
+    background-color: #3498db; /* Azul idéntico a tus gráficos de barras/boxplot */
+    color: #ffffff;
+    font-weight: bold;
+}
+
+/* Iconos o emojis dentro de los links */
+.sidebar-links a span {
+    font-size: 1.1rem;
+}
+
+/* =========================================================================
+   MAXIMIZACIÓN DEL IFRAME PARA EL MAPA (MONITOR)
+   ========================================================================= */
+
+.monitor-iframe {
+    width: 100%;          /* Ocupa el 100% del ancho restante del body */
+    height: 100vh;        /* Ocupa el 100% del alto total de la ventana de visualización */
+    border: none;         /* Elimina cualquier borde por defecto del iframe */
+    display: block;       /* Quita el espacio en blanco inferior que tienen los elementos inline */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* =========================================================================
+   ADAPTACIÓN RESPONSIVA (MOBILE)
+   ========================================================================= */
+@media (max-width: 768px) {
+    body {
+        padding-left: 0;
+    }
+    
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        padding: 15px;
+        box-shadow: none;
+    }
+
+    .sidebar-brand h2 {
+        margin-bottom: 15px;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .sidebar-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .sidebar-links li {
+        margin-bottom: 0;
+        flex: 1;
+        min-width: 140px;
+    }
+    
+    .sidebar-links a {
+        justify-content: center;
+    }
+
+    .monitor-iframe {
+        height: calc(95vh - 120px); /* Resta la altura aproximada del menú superior móvil */
+        width: 100vw;
+    }
+}
