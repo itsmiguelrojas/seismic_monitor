@@ -20,7 +20,8 @@ const colorPalette = {
 const loadingEl = document.getElementById('loading');
 const dashboardEl = document.getElementById('dashboard');
 const errorEl = document.getElementById('error');
-const slider = document.getElementById('date-slider');
+const sliderStart = document.getElementById('date-slider-start');
+const sliderEnd = document.getElementById('date-slider-end');
 const currentDateDisplay = document.getElementById('current-date-display');
 const startDateEl = document.getElementById('start-date');
 const endDateEl = document.getElementById('end-date');
@@ -140,9 +141,13 @@ async function init() {
             checkboxesContainer.appendChild(label);
         });
 
-        slider.min = 0;
-        slider.max = uniqueDates.length - 1;
-        slider.value = uniqueDates.length - 1;
+        sliderStart.min = 0;    
+        sliderStart.max = uniqueDates.length - 1;
+        sliderStart.value = 0; // El asa izquierda inicia al principio
+
+        sliderEnd.min = 0;
+        sliderEnd.max = uniqueDates.length - 1;
+        sliderEnd.value = uniqueDates.length - 1; // El asa derecha inicia al final
         
         startDateEl.textContent = uniqueDates[0];
         endDateEl.textContent = uniqueDates[uniqueDates.length - 1];
@@ -150,7 +155,8 @@ async function init() {
         loadingEl.style.display = 'none';
         dashboardEl.style.display = 'block';
 
-        slider.addEventListener('input', updateDashboard);
+        sliderStart.addEventListener('input', updateDashboard);
+        sliderEnd.addEventListener('input', updateDashboard);
         updateDashboard();
 
     } catch (err) {
@@ -162,12 +168,22 @@ async function init() {
 }
 
 function updateDashboard() {
-    const dateIndex = parseInt(slider.value);
-    const selectedDate = uniqueDates[dateIndex];
-    currentDateDisplay.textContent = selectedDate;
+    // Validación para evitar que el slider de inicio supere al de fin
+    if (parseInt(sliderStart.value) > parseInt(sliderEnd.value)) {
+        sliderStart.value = sliderEnd.value;
+    }
 
-    // [CAMBIO 3] Definimos visibleDates aquí para que esté disponible globalmente en la función
-    const visibleDates = uniqueDates.slice(0, dateIndex + 1);
+    const startIndex = parseInt(sliderStart.value);
+    const endIndex = parseInt(sliderEnd.value);
+
+    const startDate = uniqueDates[startIndex];
+    const endDate = uniqueDates[endIndex];
+
+    // Mostramos el rango seleccionado en el texto del dashboard
+    currentDateDisplay.textContent = `${startDate} a ${endDate}`;
+
+    // Acotamos el array de fechas discretas entre ambos índices
+    const visibleDates = uniqueDates.slice(startIndex, endIndex + 1);
 
     // =========================================================================
     // 1. PROCESAMIENTO Y ACTUALIZACIÓN DEL GRÁFICO DE BARRAS
@@ -175,7 +191,7 @@ function updateDashboard() {
     const checkedBoxes = Array.from(checkboxesContainer.querySelectorAll('input[type="checkbox"]:checked'));
     const selectedGroups = checkedBoxes.map(cb => cb.value);
     
-    const filteredDataBar = seismicData.filter(d => d.dateStr <= selectedDate && selectedGroups.includes(d.group));
+    const filteredDataBar = seismicData.filter(d => d.dateStr >= startDate && d.dateStr <= endDate && selectedGroups.includes(d.group));
 
     const counts = {};
     filteredDataBar.forEach(d => {
@@ -194,7 +210,7 @@ function updateDashboard() {
             data: {
                 labels: sortedMagnitudes.map(m => m.toFixed(1)),
                 datasets: [{
-                    label: 'Frecuencia de Sismos',
+                    label: 'Frecuencia de sismos',
                     data: frequencies,
                     backgroundColor: 'rgba(52, 152, 219, 0.75)',
                     borderColor: 'rgba(52, 152, 219, 1)',
@@ -214,7 +230,7 @@ function updateDashboard() {
     // =========================================================================
     // 2. PROCESAMIENTO Y ACTUALIZACIÓN DEL GRÁFICO DE LÍNEAS (SERIE DE TIEMPO CONTINUA)
     // =========================================================================
-    const lineFilteredData = seismicData.filter(d => d.dateStr <= selectedDate);
+    const lineFilteredData = seismicData.filter(d => d.dateStr >= startDate && d.dateStr <= endDate);
     
     // Mapeo estructurado de magnitudes absolutas individuales
     const lineChartData = lineFilteredData.map(d => ({
@@ -234,7 +250,7 @@ function updateDashboard() {
             data: {
                 labels: lineLabels,
                 datasets: [{
-                    label: 'Magnitud de Sismo',
+                    label: 'Magnitud de sismo',
                     data: lineChartData,
                     borderColor: '#3498db',         
                     backgroundColor: 'rgba(231, 76, 60, 0.05)',
@@ -261,7 +277,7 @@ function updateDashboard() {
                 scales: {
                     x: {
                         type: 'category', 
-                        title: { display: true, text: 'Tiempo Continuo (Fecha y Hora)', font: { weight: 'bold' } },
+                        title: { display: true, text: 'Tiempo (fecha y hora)', font: { weight: 'bold' } },
                         ticks: {
                             maxTicksLimit: 8 
                         }
@@ -291,7 +307,7 @@ function updateDashboard() {
             data: {
                 labels: visibleDates,
                 datasets: [{
-                    label: 'Distribución de Magnitudes',
+                    label: 'Distribución de magnitudes',
                     data: boxPlotData,
                     backgroundColor: 'rgba(52, 152, 219, 0.4)', 
                     borderColor: '#3498db',

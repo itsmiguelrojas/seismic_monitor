@@ -152,3 +152,62 @@ input[type="range"]::-webkit-slider-thumb:hover {
     text-align: center;
     display: none;
 }
+
+/* Contenedor relativo para alojar los sliders superpuestos */
+.dual-slider-container {
+    position: relative;
+    width: 100%;
+    height: 35px;
+    margin: 10px 0;
+    display: flex;
+    align-items: center; /* Centra verticalmente ambos componentes */
+}
+
+/* Estilo base para ambos controles */
+.dual-slider-container input[type="range"] {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    background: none; 
+    pointer-events: none; 
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Reactivar eventos del mouse ÚNICAMENTE en las asas (thumbs) */
+.dual-slider-container input[type="range"]::-webkit-slider-thumb {
+    pointer-events: auto;
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+    margin-top: -5px; /* Ajuste estándar para centrar el asa respecto a una barra de 6px */
+}
+
+.dual-slider-container input[type="range"]::-moz-range-thumb {
+    pointer-events: auto;
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+}
+
+/* [CORRECCIÓN CRÍTICA] Forzamos a que ambas barras tengan la misma altura estructural */
+.dual-slider-container input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: transparent; /* Por defecto transparente */
+}
+
+.dual-slider-container input[type="range"]::-moz-range-track {
+    height: 6px;
+    border-radius: 3px;
+    background: transparent;
+}
+
+/* Asignamos el color gris de fondo únicamente al slider de inicio */
+.dual-slider-container input[type="range"].slider-start::-webkit-slider-runnable-track {
+    background: #ddd;
+}
+.dual-slider-container input[type="range"].slider-start::-moz-range-track {
+    background: #ddd;
+}
