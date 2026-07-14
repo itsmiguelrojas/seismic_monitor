@@ -1,29 +1,39 @@
-# Mapa sísmico interactivo con deslizador temporal y contador dinámico
+# 📡 Sismos VE - Monitoreo Sísmico Venezuela
 
 ## ⚠️ Advertencia
-
-> **Información importante:** Mi ámbito de estudio corresponde a la **biología** y no a las áreas de geología, geografía, sismología o similares. 
-> 
-> Este proyecto ha sido desarrollado con un enfoque estrictamente técnico en ciencia de datos, automatización y sistemas de información geográfica (SIG), con el único propósito de contribuir a la visualización accesible de la información tras los eventos sísmicos del 24 de junio de 2026 en Venezuela. 
-> 
+> Mi ámbito de estudio corresponde a la **biología** y no a las áreas de geología, geografía, sismología o similares.
+>
+> Este proyecto ha sido desarrollado con un enfoque estrictamente técnico en ciencia de datos, automatización y sistemas de información geográfica (SIG), con el único propósito de contribuir a la visualización accesible de la información tras los eventos sísmicos del 24 de junio de 2026 en Venezuela.
+>
 > Los datos cartográficos y de registro se extraen de fuentes oficiales. Esta plataforma es una herramienta de visualización complementaria y de código abierto la cual no debe ser utilizada como sustituto de los canales oficiales de gestión de riesgos ni para análisis geofísicos formales.
 
-Este repositorio contiene una visualización en mapa interactiva e independiente para el seguimiento de los eventos sísmicos registrados en Venezuela tras el doble terremoto del 24 de junio de 2026. Está construido en R utilizando los paquetes `leaflet` y `leaflet.extras2`, e incluye una capa personalizada en JavaScript que cuenta dinámicamente los registros activos y recalcula las ventanas de tiempo sobre la marcha, **sin necesidad de un servidor o backend en Shiny.**
-
-## Estructura del repositorio
-
-* **`seismic_map.R`**: El script principal en R que gestiona la transformación de datos mediante `sf`, la configuración de Leaflet y el bloque de código de JavaScript nativo (`htmlwidgets::onRender`).
-* **`index.html`**: El mapa interactivo final compilado.
+Este repositorio contiene una plataforma interactiva e independiente de visualización y análisis estadístico para el seguimiento de los eventos sísmicos en Venezuela. El ecosistema está diseñado bajo una arquitectura híbrida: procesa y compila datos a través de R (`leaflet` y `leaflet.extras2`), inyectando interactividad fluida con **JavaScript puro** (y con ayuda de librerías como [Chart.js](https://www.chartjs.org/) y [Chart.js Box and Violin Plot](https://github.com/sgratzl/chartjs-chart-boxplot)) y **CSS3**, lo que elimina por completo la necesidad de un servidor o backend activo en Shiny.
 
 ---
 
-## Características
+## Demostración en vivo
 
-* **Filtrado temporal**: Deslizador interactivo de doble control (rango) para restringir visualmente los sismos mostrados según intervalos de inicio y fin.
-* **Ventana de contador dinámico**: Una caja de control de tipo `<div>` con estilos personalizados que se actualiza instantáneamente al arrastrar el deslizador, mostrando:
-  * El número total de eventos registrados visibles en ese instante.
-  * La fecha y hora del sismo más antiguo en el rango seleccionado.
-  * La fecha y hora del sismo más reciente en el rango seleccionado.
+El sistema se encuentra desplegado de manera estática y pública en dos secciones interconectadas por un menú de navegación unificado:
+
+* **[📡 Monitoreo Principal (mapa interactivo)](https://itsmiguelrojas.github.io/seismic_monitor/)**
+* **[📊 Estadística Descriptiva (panel de análisis)](https://itsmiguelrojas.github.io/seismic_monitor/estadisticas/)**
+
+---
+
+## Características principales
+
+### 1. Monitor Principal (visualización cartográfica)
+* **Contador dinámico de dismos:** Un widget flotante que calcula y muestra en tiempo real la cantidad de eventos activos en pantalla, adaptando además la ventana temporal visible en el deslizador.
+* **Control temporal de rango:** Deslizador interactivo de doble control (dual-slider) para restringir dinámicamente los sismos mostrados según intervalos específicos de inicio y fin.
+* **Control de capas y leyendas:** Configuración detallada sobre la tesela base de `CyclOSM` y leyendas dinámicas posicionadas estratégicamente para mejorar la UX.
+
+### 2. Panel de Estadística Descriptiva (`/estadisticas/`)
+* **Filtrado cruzado:** Integración de selectores múltiples (checkboxes) por grupos de magnitud combinados con el filtrado por rangos de fecha.
+* **Gráficos estadísticos dinámicos:** Gráficos optimizados y responsivos que coexisten verticalmente sin comprometer el rendimiento de la pestaña.
+
+### 3. Arquitectura de diseño y UI/UX global
+* **Menú lateral unificado (`sidebar`):** Un componente fijo (`<aside>`) presente en ambas páginas para un intercambio inmediato de vistas, con clases activas diferenciadas visualmente.
+* **Cálculo dinámico de pantalla (Calculated CSS):** Para evitar que el mapa de Leaflet se corte por el ancho de la barra lateral, se implementó posicionamiento absoluto y restas dinámicas basadas en Viewport Units (`width: calc(100vw - 240px)`) para garantizar la accesibilidad completa a la leyenda, los deslizadores y el control de capas.
 
 ---
 
@@ -45,17 +55,67 @@ install.packages(c("jsonlite", "httr2", "lubridate", "tidyverse", "sf", "leaflet
 
 ```
 
-### Ejecución del proyecto
+### Ejecución y compilación del proyecto
 
-1. Abre el archivo `seismic_map.R` en tu entorno de R.
-2. Ejecuta el código para procesar los datos de la API y renderizar el mapa interactivo.
-3. Para exportar y guardar el mapa como el archivo HTML independiente incluido en este repositorio, añade la siguiente línea al final del flujo de código:
-```R
-htmlwidgets::saveWidget(mapa_con_meta, "index.html", selfcontained = TRUE)
+El ensamblaje del mapa interactivo se ha rediseñado para conservar intacta la clase `htmlwidget` del mapa. Esto evita degradar el objeto a un tipo genérico `shiny.tag` y permite usar de forma nativa la función `prependContent()` de `htmlwidgets` para inyectar cabeceras, CSS y estructuras HTML antes de renderizar:
 
+```r
+## Visualización en Leaflet ----
+objeto_mapa <- leaflet(elementId = 'mapa-dashboard', width = '100%', height = '100%') |>
+  addProviderTiles('CyclOSM')) |>
+  # ... [Configuración de sismos, filtros y popups] ...
+  onRender(js_contador) |> 
+  # Acoplar la lógica de filtrado por niveles de magnitud
+  onRender(js_filtro_magnitud)
+
+## Metadatos ----
+source('html/metadatos.R')
+
+## Estilos CSS adicionales ----
+source('css/estilos_css.R')
+
+## Ensamblar página con el resto de elementos ----
+mapa_con_meta <- objeto_mapa |>
+  # Adjuntar metadatos de cabecera (desde tu archivo metadatos.R)
+  prependContent(metadatos) |>
+  # Adjuntar CSS externo y estilos estructurales dinámicos
+  prependContent(
+    tags$head(
+      tags$link(rel = "stylesheet", href = "css/estadisticas_estilos.css"),
+      tags$style(HTML("
+        body {
+          display: block !important;
+          margin: 0;
+          padding: 0 0 0 240px !important;
+          background-color: #f8f9fa !important;
+          height: 100% !important;
+          width: 100% !important;
+          overflow: hidden !important;
+        }
+        /* Apuntamos directamente al ID del contenedor del mapa */
+        #mapa-dashboard {
+          width: calc(100vw - 240px) !important;
+          height: 100vh !important;
+        }
+        /* Ajuste responsivo directo para el mapa en dispositivos móviles */
+        @media (max-width: 768px) {
+          body {
+            padding: 0 !important;
+            overflow-y: auto !important;
+          }
+        
+          #mapa-dashboard {
+            position: relative !important;
+            width: 100vw !important;
+            height: calc(100vh - 120px) !important;
+          }
+        }
+      "))
+    )
+  ) |>
+  # Adjuntar la estructura HTML de la barra lateral (se renderiza antes del mapa en el body)
+  prependContent(html_sidebar)
 ```
-
-
 
 ---
 
