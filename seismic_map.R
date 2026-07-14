@@ -142,7 +142,7 @@ palFactor <- c('#03c700','#75b600','#a0a300','#bf8d00','#d77400','#ed5200','#ff0
 pal <- leaflet::colorFactor(palFactor, domain = sismos_df$magnitud_grupo, reverse = F)
 
 ## Visualización en Leaflet ----
-objeto_mapa <- leaflet() |>
+objeto_mapa <- leaflet(elementId = 'mapa-dashboard', width = '100%', height = '100%') |>
   # Mapas base intercambiables desde proveedores globales externos y asignación de los créditos de propiedad intelectual correspondientes
   addProviderTiles('CyclOSM', group = 'CyclOSM', options = providerTileOptions(attribution = '<a href=\"https://github.com/cyclosm/cyclosm-cartocss-style/releases/\">CyclOSM</a> | Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>')) |>
   addProviderTiles('CartoDB.DarkMatter', group = 'CartoDB Dark Matter', options = providerTileOptions(attribution = '<a href=\"https://carto.com/attribution/\">CARTO</a> | Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>')) |>
@@ -186,12 +186,6 @@ objeto_mapa <- leaflet() |>
       </table>'
     )
   ) |>
-  # Agregar el widget flotante del título del mapa
-  addControl(
-    html = title_div, 
-    position = 'topleft',
-    className = 'map-title'
-  ) |>
   # Pasar el HTML dinámico con los grupos de magnitud
   addControl(
     html = panel_unificado,
@@ -224,8 +218,47 @@ source('html/metadatos.R')
 ## Estilos CSS adicionales ----
 source('css/estilos_css.R')
 
-## Poner los metadatos en la cabecera del widget de Leaflet ----
-mapa_con_meta <- htmlwidgets::prependContent(objeto_mapa, metadatos, estilo_adicional)
+## Ensamblar página con el resto de elementos ----
+mapa_con_meta <- objeto_mapa |>
+  # Adjuntar metadatos de cabecera (desde tu archivo metadatos.R)
+  prependContent(metadatos) |>
+  # Adjuntar CSS externo y estilos estructurales dinámicos
+  prependContent(
+    tags$head(
+      tags$link(rel = "stylesheet", href = "css/estadisticas_estilos.css"),
+      tags$style(HTML("
+        body {
+          display: block !important;
+          margin: 0;
+          padding: 0 0 0 240px !important;
+          background-color: #f8f9fa !important;
+          height: 100% !important;
+          width: 100% !important;
+          overflow: hidden !important;
+        }
+        /* Apuntamos directamente al ID del contenedor del mapa */
+        #mapa-dashboard {
+          width: calc(100vw - 240px) !important;
+          height: 100vh !important;
+        }
+        /* Ajuste responsivo directo para el mapa en dispositivos móviles */
+        @media (max-width: 768px) {
+          body {
+            padding: 0 !important;
+            overflow-y: auto !important;
+          }
+        
+          #mapa-dashboard {
+            position: relative !important;
+            width: 100vw !important;
+            height: calc(100vh - 120px) !important;
+          }
+        }
+      "))
+    )
+  ) |>
+  # Adjuntar la estructura HTML de la barra lateral (se renderiza antes del mapa en el body)
+  prependContent(html_sidebar)
 
 ## Guardar el objeto geoespacial en un archivo GeoJSON (.geojson) ----
 # Comprobar primero si el archivo existe o si el número de registros es diferente en el objeto sf cargado en el entorno y en el archivo
@@ -238,8 +271,8 @@ if(!file.exists('sismos.geojson') || nrow(st_read('sismos.geojson', quiet = TRUE
   # 2. Generar y guardar el HTML definitivo SÓLO si hay datos nuevos
   htmlwidgets::saveWidget(
     widget = mapa_con_meta,
-    file = "map.html",
-    selfcontained = TRUE,
+    file = "index.html",
+    selfcontained = FALSE,
     title = "Monitoreo Sísmico Venezuela - Mapa Interactivo"
   )
   

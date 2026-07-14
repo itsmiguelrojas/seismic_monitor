@@ -17,5 +17,8 @@ metadatos <- tags$head(
   tags$meta(name = 'twitter:card', content = 'summary_large_image'),
   tags$meta(name = 'twitter:title', content = 'Monitoreo Sísmico Venezuela - Mapa Interactivo'),
   tags$meta(name = 'twitter:description', content = 'Visualización interactiva y filtrado temporal de eventos sísmicos.'),
-  tags$meta(name = 'twitter:image', content = 'https://raw.githubusercontent.com/itsmiguelrojas/seismic_monitor/main/main.png')
+  tags$meta(name = 'twitter:image', content = 'https://raw.githubusercontent.com/itsmiguelrojas/seismic_monitor/main/main.png'),
+  
+  # Hoja de estilo global
+  tags$link(rel = "stylesheet", href = "css/estadisticas_estilos.css")
 )

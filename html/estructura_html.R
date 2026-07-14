@@ -1,19 +1,3 @@
-## Inyectar estilos CSS específicos para posicionar y flotar el título del mapa de manera fija ----
-map_title <- tags$style(HTML('
-  .leaflet-control.map-title { 
-    position: fixed !important; 
-    left: 50%; 
-    transform: translateX(-50%);
-    text-align: center; 
-    padding-left: 10px; 
-    padding-right: 10px; 
-    background: rgba(255,255,255,0.75); 
-    font-weight: bold; 
-    font-size: 24px;
-    border-radius: 4px;
-  }
-'))
-
 ## Extraer los niveles del factor de magnitudes ----
 niveles_grupos <- levels(sismos_sf$magnitud_grupo)
 
@@ -38,12 +22,6 @@ filtro_mag_html <- paste0(
   opciones_checkbox_html,
   '</div>',
   '</details>'
-)
-
-## Crear el contenedor div físico que encapsula el título del mapa ----
-title_div <- tags$div(
-  map_title,
-  HTML('Monitoreo Sísmico Venezuela')
 )
 
 ## Crear minigráfico con magnitudes ----
@@ -100,3 +78,24 @@ panel_unificado <- paste0(
   html_minigrafico,
   '</div>'
 )
+
+## Sidebar para la navegación del sitio ----
+html_sidebar <- htmltools::HTML('
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <h2>Sismos VE</h2>
+    </div>
+    <ul class="sidebar-links">
+        <li>
+            <a href="#" class="active">
+                <span>📡</span> Monitoreo Principal
+            </a>
+        </li>
+        <li>
+            <a href="estadisticas/">
+                <span>📊</span> Estadística Descriptiva
+            </a>
+        </li>
+    </ul>
+</aside>
+')
