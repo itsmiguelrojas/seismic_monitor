@@ -6,14 +6,4 @@ estilo_adicional <- tags$style(HTML('
   .menu-content {
     height: 100px;
   }
-  
-  @media (max-width: 855px) {
-  .leaflet-control.map-title {
-    display: none !important;
-  }
-  
-  div#panel-contenido {
-    width: 210px !important;
-  }
-}
 '))

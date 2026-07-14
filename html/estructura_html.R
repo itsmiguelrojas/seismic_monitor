@@ -68,7 +68,7 @@ panel_unificado <- paste0(
     padding: 12px; 
     border-radius: 4px; 
     box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-    width: 400px;
+    width: 210px;
     margin-top: 5px;
     position: absolute;
     left: 0;
@@ -84,6 +84,7 @@ html_sidebar <- htmltools::HTML('
 <aside class="sidebar">
     <div class="sidebar-brand">
         <h2>Sismos VE</h2>
+        <p class="made-by">Creado por <a href="https://github.com/itsmiguelrojas" target="_blank">@itsmiguelrojas</a></p>
     </div>
     <ul class="sidebar-links">
         <li>

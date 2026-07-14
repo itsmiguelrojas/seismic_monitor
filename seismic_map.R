@@ -198,8 +198,8 @@ objeto_mapa <- leaflet(elementId = 'mapa-dashboard', width = '100%', height = '1
     values = ~magnitud_grupo,
     shape = 'circle',
     title = 'Magnitud',
-    orientation = 'horizontal',
-    position = 'bottomright'
+    orientation = 'vertical',
+    position = 'bottomleft'
   ) |>
   # Configurar opciones de interacción, activación e intercambio de mapas base
   addLayersControl(

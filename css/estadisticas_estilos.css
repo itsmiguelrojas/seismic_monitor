@@ -96,7 +96,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     color: #95a5a6;
 }
 
-/* [NUEVO] Estilos para el nuevo panel de filtros de magnitud grupo */
+/* Estilos para el nuevo panel de filtros de magnitud grupo */
 .filter-section {
     border-top: 1px dashed #ddd;
     padding-top: 15px;
@@ -251,6 +251,10 @@ body {
     padding-bottom: 15px;
 }
 
+.sidebar-brand p a {
+    color: #fff;
+}
+
 /* Lista de hipervínculos */
 .sidebar-links {
     list-style: none;
@@ -309,6 +313,11 @@ body {
     overflow-y: auto;
 }
 
+/* Aumentar la altura de la leyenda en el mapa */
+.info.legend.leaflet-control {
+    margin-bottom: 4em;
+  }
+
 /* =========================================================================
    ADAPTACIÓN RESPONSIVA (MOBILE)
    ========================================================================= */
@@ -325,10 +334,19 @@ body {
         box-shadow: none;
     }
 
-    .sidebar-brand h2 {
+    .sidebar-brand {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-evenly;
+        gap: 20px;
+    }
+
+    .sidebar-brand h2, .sidebar-brand p {
         margin-bottom: 15px;
+        margin-left: 0;
         border-bottom: none;
         padding-bottom: 0;
+        font-size: 15px;
     }
 
     .sidebar-links {
@@ -345,10 +363,16 @@ body {
     
     .sidebar-links a {
         justify-content: center;
+        font-size: 10px !important;
+        padding: 0 !important;
     }
 
     .monitor-iframe {
         height: calc(95vh - 120px); /* Resta la altura aproximada del menú superior móvil */
         width: 100vw;
+    }
+
+    .charts-row {
+        display: block !important;
     }
 }
