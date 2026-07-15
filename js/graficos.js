@@ -222,7 +222,14 @@ function updateDashboard() {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                scales: { y: {
+                  title: { display: true, text: 'Frecuencia', font: { weight: 'bold' } },
+                  beginAtZero: true,
+                  ticks: { precision: 0 }
+                },
+                          x : {
+                  title: { display: true, text: 'Magnitud (Mw)', font: { weight: 'bold' } }
+                          }}
             }
         });
     }
@@ -266,12 +273,7 @@ function updateDashboard() {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const p = context.raw;
-                                return `Momento: ${p.x} | Magnitud: ${p.y.toFixed(1)}`;
-                            }
-                        }
+                        enabled: false
                     }
                 },
                 scales: {
@@ -283,7 +285,7 @@ function updateDashboard() {
                         }
                     },
                     y: {
-                        title: { display: true, text: 'Magnitud', font: { weight: 'bold' } },
+                        title: { display: true, text: 'Magnitud (Mw)', font: { weight: 'bold' } },
                         beginAtZero: true,
                         suggestedMax: 5
                     }
@@ -337,7 +339,7 @@ function updateDashboard() {
                         title: { display: true, text: 'Cronología (Fechas)', font: { weight: 'bold' } }
                     },
                     y: {
-                        title: { display: true, text: 'Magnitud', font: { weight: 'bold' } },
+                        title: { display: true, text: 'Magnitud (Mw)', font: { weight: 'bold' } },
                         beginAtZero: true,
                         suggestedMax: 5 
                     }

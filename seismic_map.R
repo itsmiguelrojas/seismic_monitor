@@ -111,6 +111,7 @@ sismos_df <- sismos_df |>
     # Control de calidad y corrección de offsets/errores tipográficos de coordenadas de la API original
     longitud = if_else(longitud == -21.42, -61.42, longitud),
     latitud = if_else(latitud == 16.65, 10.65, latitud),
+    latitud = if_else(longitud == -68.81 & latitud == 6.24, 9.24, latitud),
     # Agrupar las magnitudes por grupos de escala y crear factor de magnitud
     magnitud_grupo = cut(magnitud, breaks = 1:8, right = F, labels = 1:7)
   ) |>
