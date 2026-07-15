@@ -125,6 +125,9 @@ sismos_sf <- st_as_sf(
   crs = 4326 # Sistema de Referencia Geográfico Mundial Estándar WGS84
 )
 
+## Añadir shapefile de fallas (Global Active Earthquake Faults, via ArcGIS) ----
+fallas <- st_read('Global_Active_Earthquake_Faults.geojson')
+
 ## Gráfico exploratorio rápido de control para evaluar magnitudes en el tiempo ----
 #sismos_df |>
 #  ggplot(aes(x = fecha, y = magnitud)) +
@@ -145,9 +148,35 @@ pal <- leaflet::colorFactor(palFactor, domain = sismos_df$magnitud_grupo, revers
 ## Visualización en Leaflet ----
 objeto_mapa <- leaflet(elementId = 'mapa-dashboard', width = '100%', height = '100%') |>
   # Mapas base intercambiables desde proveedores globales externos y asignación de los créditos de propiedad intelectual correspondientes
-  addProviderTiles('CyclOSM', group = 'CyclOSM', options = providerTileOptions(attribution = '<a href=\"https://github.com/cyclosm/cyclosm-cartocss-style/releases/\">CyclOSM</a> | Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>')) |>
-  addProviderTiles('CartoDB.DarkMatter', group = 'CartoDB Dark Matter', options = providerTileOptions(attribution = '<a href=\"https://carto.com/attribution/\">CARTO</a> | Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>')) |>
-  addProviderTiles('Esri.WorldImagery', group = 'ESRI World Imagery', options = providerTileOptions(attribution = 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community | Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>')) |>
+  addProviderTiles('CyclOSM', group = 'CyclOSM', options = providerTileOptions(attribution = '<a href=\"https://github.com/cyclosm/cyclosm-cartocss-style/releases/\">CyclOSM</a> | Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>, <a href="https://hub.arcgis.com/datasets/37a384d4c1ef4f56a33a40f291a634e9_0/about">ArcGIS</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>')) |>
+  addProviderTiles('CartoDB.DarkMatter', group = 'CartoDB Dark Matter', options = providerTileOptions(attribution = '<a href=\"https://carto.com/attribution/\">CARTO</a> | Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>, <a href="https://hub.arcgis.com/datasets/37a384d4c1ef4f56a33a40f291a634e9_0/about">ArcGIS</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>')) |>
+  addProviderTiles('Esri.WorldImagery', group = 'ESRI World Imagery', options = providerTileOptions(attribution = 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community | Datos: &copy; <a href=\"http://www.funvisis.gob.ve/\">FUNVISIS</a> via <a href=\"https://drp-venezuela-disastersesriven.hub.arcgis.com/\">Esri Venezuela DRP</a>, <a href="https://hub.arcgis.com/datasets/37a384d4c1ef4f56a33a40f291a634e9_0/about">ArcGIS</a>. Visualización hecha por <a href=\"https://github.com/itsmiguelrojas/\">itsmiguelrojas</a>')) |>
+  # Añadir líneas de fallas
+  addPolylines(
+    data = fallas,
+    color = '#F00',
+    weight = 3,
+    popup = ~paste(
+      '<h4><b>Falla</b></h4>',
+      '<hr>',
+      '<table id="inner-box" style="border-collapse: collapse; width: 100%;">',
+      '<tbody>',
+      '<tr>',
+      '<th style="border: 1px solid #000; padding: 8px; text-align: left;">Catálogo</th>',
+      '<td style="border: 1px solid #000; padding: 8px;">', catalog_na, '</td>',
+      '</tr>',
+      '<tr>',
+      '<th style="border: 1px solid #000; padding: 8px; text-align: left;">Nombre</th>',
+      '<td style="border: 1px solid #000; padding: 8px;">', name, '</td>',
+      '</tr>',
+      '<tr>',
+      '<th style="border: 1px solid #000; padding: 8px; text-align: left;">Deslizamiento</th>',
+      '<td style="border: 1px solid #000; padding: 8px;">', slip_type, '</td>',
+      '</tr>',
+      '</tbody>',
+      '</table>'
+    )
+  ) |>
   # Incorporación y mapeo del slider de tiempo
   addTimeslider(
     data = sismos_sf,
