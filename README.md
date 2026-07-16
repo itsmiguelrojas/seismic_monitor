@@ -23,9 +23,10 @@ El sistema se encuentra desplegado de manera estática y pública en dos seccion
 ## Características principales
 
 ### 1. Monitor Principal (visualización cartográfica)
-* **Contador dinámico de dismos:** Un widget flotante que calcula y muestra en tiempo real la cantidad de eventos activos en pantalla, adaptando además la ventana temporal visible en el deslizador.
+* **Contador dinámico de sismos:** Un widget flotante que calcula y muestra en tiempo real la cantidad de eventos activos en pantalla, adaptando además la ventana temporal visible en el deslizador.
 * **Control temporal de rango:** Deslizador interactivo de doble control (dual-slider) para restringir dinámicamente los sismos mostrados según intervalos específicos de inicio y fin.
 * **Control de capas y leyendas:** Configuración detallada sobre la tesela base de `CyclOSM` y leyendas dinámicas posicionadas estratégicamente para mejorar la UX.
+* **Información sobre sismos y fallas**: Al hacer clic sobre un sismo registrado (punto) o sobre una falla (línea), se muestra una ventana emergente (popup) con información sobre la misma.
 
 ### 2. Panel de Estadística Descriptiva (`/estadisticas/`)
 * **Filtrado cruzado:** Integración de selectores múltiples (checkboxes) por grupos de magnitud combinados con el filtrado por rangos de fecha.
