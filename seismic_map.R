@@ -21,7 +21,7 @@ install_and_load <- function(pkgs){
 
 paquetes <- c('jsonlite','httr2','lubridate','tidyverse','sf',
               'leaflet','leaflet.extras2','leaflegend','htmlwidgets',
-              'htmltools')
+              'htmltools','scales')
 
 ## Ejecutar función ----
 install_and_load(paquetes)
@@ -128,6 +128,29 @@ sismos_sf <- st_as_sf(
 ## Añadir shapefile de fallas (Global Active Earthquake Faults, via ArcGIS) ----
 fallas <- st_read('Global_Active_Earthquake_Faults.geojson')
 
+## Simplificar los tipos de fallas ----
+fallas <- fallas |>
+  mutate(
+    slip_group = case_when(
+      is.na(slip_type) ~ "Sin etiqueta",
+      
+      # Convergentes (Reverse/Subduction)
+      str_detect(slip_type, "Reverse|Subduction_Thrust") ~ "Convergente",
+      
+      # Extensivas (Normal)
+      str_detect(slip_type, "Normal") ~ "Extensiva",
+      
+      # Cizalla lateral “pura” / transform dextral
+      slip_type %in% c("Dextral", "Sinistral", "Dextral_Transform") ~ "Cizalla lateral",
+      
+      str_detect(slip_type, " ") ~ "Sin etiqueta",
+      
+      # Si cae algo raro no capturado (p. ej. combinaciones no contempladas)
+      TRUE ~ "Mixta/Oblicua"
+    )
+  ) |>
+  relocate(slip_group, .before = geometry)
+
 ## Gráfico exploratorio rápido de control para evaluar magnitudes en el tiempo ----
 #sismos_df |>
 #  ggplot(aes(x = fecha, y = magnitud)) +
@@ -143,7 +166,10 @@ source('js/funciones_js.R')
 
 ## Definir la paleta discreta basada en tonalidades de verde a rojo mapeada según la magnitud física ----
 palFactor <- c('#03c700','#75b600','#a0a300','#bf8d00','#d77400','#ed5200','#ff0000')
-pal <- leaflet::colorFactor(palFactor, domain = sismos_df$magnitud_grupo, reverse = F)
+pal <- leaflet::colorFactor(palFactor, domain = sismos_sf$magnitud_grupo, reverse = F)
+
+## Definir la paleta discreta basada en el tipo de falla ----
+palFalla <- colorFactor(hue_pal()(6), domain = fallas$slip_group)
 
 ## Visualización en Leaflet ----
 objeto_mapa <- leaflet(elementId = 'mapa-dashboard', width = '100%', height = '100%') |>
@@ -154,8 +180,8 @@ objeto_mapa <- leaflet(elementId = 'mapa-dashboard', width = '100%', height = '1
   # Añadir líneas de fallas
   addPolylines(
     data = fallas,
-    color = '#F00',
-    weight = 3,
+    color = ~palFalla(slip_group),
+    weight = 5,
     popup = ~paste(
       '<h4><b>Falla</b></h4>',
       '<hr>',
@@ -170,8 +196,8 @@ objeto_mapa <- leaflet(elementId = 'mapa-dashboard', width = '100%', height = '1
       '<td style="border: 1px solid #000; padding: 8px;">', name, '</td>',
       '</tr>',
       '<tr>',
-      '<th style="border: 1px solid #000; padding: 8px; text-align: left;">Deslizamiento</th>',
-      '<td style="border: 1px solid #000; padding: 8px;">', slip_type, '</td>',
+      '<th style="border: 1px solid #000; padding: 8px; text-align: left;">Tipo</th>',
+      '<td style="border: 1px solid #000; padding: 8px;">', slip_group, '</td>',
       '</tr>',
       '</tbody>',
       '</table>'
