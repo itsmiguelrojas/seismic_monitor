@@ -66,7 +66,7 @@ async function init() {
             if (rawMag !== undefined && rawMag !== null) {
                 const mag = parseFloat(rawMag);
                 
-                if (!isNaN(mag) && mag % 1 !== 0) {
+                if (!isNaN(mag)) {
                     const dateStr = extractDateString(rawDate);
                     if (dateStr) {
                         groupsSet.add(rawGroup);
