@@ -114,8 +114,9 @@ sismos_df <- sismos_df |>
     latitud = if_else(longitud == -68.81 & latitud == 6.24, 9.24, latitud),
 
     # Cambio de ubicación del terremoto principal (datos actualizados del USGS)
-    latitud = if_else(as.Date(fecha) == '2026-06-24' && magnitud == 7.5, 10.62, latitud),
-    longitud = if_else(as.Date(fecha) == '2026-06-24' && magnitud == 7.5, -67.19, longitud),
+    latitud = if_else(as.Date(fecha) == '2026-06-24' & magnitud == 7.5, 10.62, latitud),
+    longitud = if_else(as.Date(fecha) == '2026-06-24' & magnitud == 7.5, -67.19, longitud),
+    epicentro = if_else(as.Date(fecha) == '2026-06-24' & magnitud == 7.5, '17 km al oeste de Catia La Mar', epicentro),
     
     # Agrupar las magnitudes por grupos de escala y crear factor de magnitud
     magnitud_grupo = cut(magnitud, breaks = 1:8, right = F, labels = 1:7)
